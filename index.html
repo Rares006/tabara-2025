@@ -214,6 +214,15 @@
             border: 2px solid #c3e6cb;
         }
 
+        .success a {
+            color: #155724;
+            text-decoration: underline;
+        }
+
+        .success a:hover {
+            color: #0a3d0f;
+        }
+
         .error {
             background: linear-gradient(135deg, #f8d7da, #f5c6cb);
             color: #721c24;
@@ -440,11 +449,27 @@
                 const isMatch = checkObjectMatch(detectedObjects, selectedObj.keywords);
                 
                 if (isMatch) {
-                    completedObjects.add(selectedObject);
-                    showResult('success', `🎉 Excelent! Ai găsit ${selectedObj.name}!`);
-                    selectedObject = null;
-                    renderObjectList();
-                    updateProgress();
+                    // Încarcă poza în Firebase
+                    showResult('loading', 'Salvez poza în cloud...');
+                    
+                    try {
+                        const imageUrl = await window.uploadImageToFirebase(file, selectedObj.name);
+                        
+                        completedObjects.add(selectedObject);
+                        showResult('success', `🎉 Excelent! Ai găsit ${selectedObj.name}!<br>📸 Poza a fost salvată în cloud!<br><small>URL: <a href="${imageUrl}" target="_blank">Vezi poza</a></small>`);
+                        selectedObject = null;
+                        renderObjectList();
+                        updateProgress();
+                        
+                    } catch (uploadError) {
+                        console.error('Eroare la încărcarea în Firebase:', uploadError);
+                        // Marchează ca completat chiar dacă încărcarea a eșuat
+                        completedObjects.add(selectedObject);
+                        showResult('success', `🎉 Excelent! Ai găsit ${selectedObj.name}!<br>⚠️ Poza nu a putut fi salvată în cloud, dar progresul a fost salvat local.`);
+                        selectedObject = null;
+                        renderObjectList();
+                        updateProgress();
+                    }
                 } else {
                     showResult('error', `❌ Nu am găsit ${selectedObj.name} în imagine. Încearcă din nou cu o poză mai clară!`);
                 }
@@ -558,6 +583,66 @@
 
         // Inițializează aplicația
         init();
+    </script>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getStorage, ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js';
+        import { getFirestore, collection, addDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        // Configurația Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyAA1ytLJrwh7JHSOwGQrf2t_5imgtiWLk4",
+            authDomain: "tabara-2025-95ff5.firebaseapp.com",
+            projectId: "tabara-2025-95ff5",
+            storageBucket: "tabara-2025-95ff5.appspot.com",
+            messagingSenderId: "552618851743",
+            appId: "1:552618851743:web:your-app-id"
+        };
+
+        // Inițializează Firebase
+        const app = initializeApp(firebaseConfig);
+        const storage = getStorage(app);
+        const db = getFirestore(app);
+
+        // Funcție pentru încărcarea pozei în Firebase Storage
+        async function uploadImageToFirebase(file, objectName) {
+            try {
+                // Creează un nume unic pentru fișier
+                const timestamp = Date.now();
+                const fileName = `vanatorade-obiecte/${objectName}_${timestamp}.jpg`;
+                
+                // Creează referința în Storage
+                const storageRef = ref(storage, fileName);
+                
+                // Încarcă fișierul
+                const snapshot = await uploadBytes(storageRef, file);
+                
+                // Obține URL-ul de download
+                const downloadURL = await getDownloadURL(snapshot.ref);
+                
+                // Salvează informațiile în Firestore
+                const docRef = await addDoc(collection(db, "discovered-objects"), {
+                    objectName: objectName,
+                    imageUrl: downloadURL,
+                    fileName: fileName,
+                    timestamp: serverTimestamp(),
+                    userAgent: navigator.userAgent,
+                    uploadedAt: new Date().toISOString()
+                });
+                
+                console.log("Poza încărcată cu succes! Document ID:", docRef.id);
+                return downloadURL;
+                
+            } catch (error) {
+                console.error("Eroare la încărcarea pozei:", error);
+                throw error;
+            }
+        }
+
+        // Fă funcția disponibilă global
+        window.uploadImageToFirebase = uploadImageToFirebase;
     </script>
 </body>
 </html>
