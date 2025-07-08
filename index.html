@@ -471,7 +471,7 @@
                         updateProgress();
                     }
                 } else {
-                    showResult('error', `❌ Nu am găsit ${selectedObj.name} în imagine. Încearcă din nou cu o poză mai clară!`);
+                    showResult('error', `❌ Nu am găsit ${selectedObj.name} în imagine. Încearcă din nou cu o poză mai clară!<br><button class="report-btn" onclick="reportImage('${base64}', ${selectedObject})">📝 Raportează Poza (Cred că obiectul este în imagine)</button>`);
                 }
                 
             } catch (error) {
