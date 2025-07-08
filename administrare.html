@@ -1,0 +1,1217 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Vânătoarea de Obiecte</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 3px solid #3498db;
+        }
+
+        h1 {
+            color: #2c3e50;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #3498db, #2980b9);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            color: #7f8c8d;
+            font-size: 1.1em;
+        }
+
+        .admin-sections {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .section {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            border: 2px solid #ecf0f1;
+        }
+
+        .section h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #bdc3c7;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s ease;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+
+        .emoji-picker {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 10px;
+            margin-top: 10px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .emoji-option {
+            font-size: 2em;
+            padding: 10px;
+            text-align: center;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .emoji-option:hover {
+            background: #e9ecef;
+            transform: scale(1.1);
+        }
+
+        .emoji-option.selected {
+            background: #3498db;
+            border-color: #2980b9;
+            transform: scale(1.1);
+        }
+
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(52, 152, 219, 0.4);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #27ae60, #229954);
+            color: white;
+            box-shadow: 0 5px 15px rgba(39, 174, 96, 0.3);
+        }
+
+        .btn-success:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(39, 174, 96, 0.4);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: white;
+            box-shadow: 0 5px 15px rgba(231, 76, 60, 0.3);
+        }
+
+        .btn-danger:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(231, 76, 60, 0.4);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #95a5a6, #7f8c8d);
+            color: white;
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            transform: translateY(-2px);
+        }
+
+        .objects-list {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 2px solid #ecf0f1;
+            border-radius: 8px;
+            padding: 15px;
+        }
+
+        .object-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px;
+            margin-bottom: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+            transition: all 0.3s ease;
+        }
+
+        .object-item:hover {
+            background: #e9ecef;
+            transform: translateX(5px);
+        }
+
+        .object-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex: 1;
+        }
+
+        .object-emoji {
+            font-size: 2em;
+        }
+
+        .object-details h4 {
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+
+        .object-keywords {
+            color: #7f8c8d;
+            font-size: 0.9em;
+        }
+
+        .object-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid;
+            animation: slideIn 0.5s ease;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border-color: #c3e6cb;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border-color: #f5c6cb;
+        }
+
+        .alert-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border-color: #bee5eb;
+        }
+
+        .alert-warning {
+            background: #fff3cd;
+            color: #856404;
+            border-color: #ffeaa7;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(52, 152, 219, 0.2);
+        }
+
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 1em;
+            opacity: 0.9;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 30px;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #ecf0f1;
+        }
+
+        .modal-title {
+            font-size: 1.5em;
+            color: #2c3e50;
+            margin: 0;
+        }
+
+        .close {
+            color: #aaa;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            background: none;
+            padding: 0;
+            line-height: 1;
+        }
+
+        .close:hover {
+            color: #e74c3c;
+        }
+
+        .discovered-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            margin-bottom: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+
+        .discovered-emoji {
+            font-size: 2em;
+        }
+
+        .discovered-info {
+            flex: 1;
+        }
+
+        .discovered-name {
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+
+        .discovered-time {
+            color: #7f8c8d;
+            font-size: 0.9em;
+        }
+
+        .discovered-photo {
+            width: 60px;
+            height: 60px;
+            border-radius: 8px;
+            object-fit: cover;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .discovered-photo:hover {
+            transform: scale(1.1);
+        }
+
+        @media (max-width: 768px) {
+            .admin-sections {
+                grid-template-columns: 1fr;
+            }
+            
+            .emoji-picker {
+                grid-template-columns: repeat(6, 1fr);
+            }
+            
+            .container {
+                padding: 20px;
+            }
+
+            .object-item {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+
+            .object-actions {
+                justify-content: center;
+            }
+
+            .modal-content {
+                width: 95%;
+                margin: 10% auto;
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔧 Panou de Administrare</h1>
+            <p class="subtitle">Gestionează lista de obiecte pentru Vânătoarea de Obiecte</p>
+        </div>
+
+        <div class="stats" id="stats">
+            <div class="stat-card">
+                <div class="stat-number" id="totalObjects">0</div>
+                <div class="stat-label">Obiecte Totale</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="discoveredToday">0</div>
+                <div class="stat-label">Descoperite Azi</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="totalPhotos">0</div>
+                <div class="stat-label">Poze Totale</div>
+            </div>
+        </div>
+
+        <div id="alerts"></div>
+
+        <div class="admin-sections">
+            <div class="section">
+                <h2>➕ Adaugă Obiect Nou</h2>
+                
+                <form id="addObjectForm">
+                    <div class="form-group">
+                        <label for="objectName">Numele Obiectului:</label>
+                        <input type="text" id="objectName" placeholder="ex: Cană, Telefon, Carte..." required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="objectEmoji">Selectează Emoji:</label>
+                        <div class="emoji-picker" id="emojiPicker">
+                            <span class="emoji-option" data-emoji="☕">☕</span>
+                            <span class="emoji-option" data-emoji="📱">📱</span>
+                            <span class="emoji-option" data-emoji="📚">📚</span>
+                            <span class="emoji-option" data-emoji="👓">👓</span>
+                            <span class="emoji-option" data-emoji="⌚">⌚</span>
+                            <span class="emoji-option" data-emoji="✏️">✏️</span>
+                            <span class="emoji-option" data-emoji="🌱">🌱</span>
+                            <span class="emoji-option" data-emoji="🔑">🔑</span>
+                            <span class="emoji-option" data-emoji="🔋">🔋</span>
+                            <span class="emoji-option" data-emoji="🪙">🪙</span>
+                            <span class="emoji-option" data-emoji="🎒">🎒</span>
+                            <span class="emoji-option" data-emoji="🧸">🧸</span>
+                            <span class="emoji-option" data-emoji="🎯">🎯</span>
+                            <span class="emoji-option" data-emoji="🏀">🏀</span>
+                            <span class="emoji-option" data-emoji="🎨">🎨</span>
+                            <span class="emoji-option" data-emoji="🔨">🔨</span>
+                            <span class="emoji-option" data-emoji="🎸">🎸</span>
+                            <span class="emoji-option" data-emoji="🏆">🏆</span>
+                            <span class="emoji-option" data-emoji="💡">💡</span>
+                            <span class="emoji-option" data-emoji="🎭">🎭</span>
+                            <span class="emoji-option" data-emoji="🎪">🎪</span>
+                            <span class="emoji-option" data-emoji="🎲">🎲</span>
+                            <span class="emoji-option" data-emoji="🧩">🧩</span>
+                            <span class="emoji-option" data-emoji="🔔">🔔</span>
+                        </div>
+                        <input type="hidden" id="selectedEmoji" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="objectKeywords">Cuvinte cheie pentru AI (separate prin virgulă):</label>
+                        <textarea id="objectKeywords" rows="3" placeholder="ex: cup, mug, coffee cup, tea cup, cana, ceasca" required></textarea>
+                        <small style="color: #7f8c8d;">Acestea ajută AI-ul să recunoască obiectul în poze. Folosește și cuvinte în română și engleză.</small>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" id="addObjectBtn">➕ Adaugă Obiect</button>
+                </form>
+            </div>
+
+            <div class="section">
+                <h2>📋 Lista Obiectelor</h2>
+                
+                <div class="form-group">
+                    <button class="btn btn-success" onclick="loadObjects()">🔄 Reîncarcă Lista</button>
+                    <button class="btn btn-secondary" onclick="exportObjects()">📥 Exportă JSON</button>
+                    <button class="btn btn-secondary" onclick="document.getElementById('importFile').click()">📤 Importă JSON</button>
+                    <input type="file" id="importFile" accept=".json" style="display: none;" onchange="importObjects(event)">
+                </div>
+
+                <div class="loading" id="loading">
+                    <div class="spinner"></div>
+                    <p>Se încarcă obiectele...</p>
+                </div>
+
+                <div class="objects-list" id="objectsList">
+                    <!-- Obiectele se vor încărca aici -->
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>📊 Statistici și Monitorizare</h2>
+            <button class="btn btn-primary" onclick="viewDiscoveredObjects()">👀 Vezi Obiectele Descoperite</button>
+            <button class="btn btn-primary" onclick="downloadAllPhotos()">📸 Descarcă Toate Pozele</button>
+            <button class="btn btn-danger" onclick="clearAllData()">🗑️ Șterge Toate Datele</button>
+        </div>
+    </div>
+
+    <!-- Modal pentru editarea obiectelor -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">✏️ Editează Obiect</h3>
+                <button class="close" onclick="closeEditModal()">&times;</button>
+            </div>
+            <form id="editObjectForm">
+                <div class="form-group">
+                    <label for="editObjectName">Numele Obiectului:</label>
+                    <input type="text" id="editObjectName" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="editObjectEmoji">Selectează Emoji:</label>
+                    <div class="emoji-picker" id="editEmojiPicker">
+                        <span class="emoji-option" data-emoji="☕">☕</span>
+                        <span class="emoji-option" data-emoji="📱">📱</span>
+                        <span class="emoji-option" data-emoji="📚">📚</span>
+                        <span class="emoji-option" data-emoji="👓">👓</span>
+                        <span class="emoji-option" data-emoji="⌚">⌚</span>
+                        <span class="emoji-option" data-emoji="✏️">✏️</span>
+                        <span class="emoji-option" data-emoji="🌱">🌱</span>
+                        <span class="emoji-option" data-emoji="🔑">🔑</span>
+                        <span class="emoji-option" data-emoji="🔋">🔋</span>
+                        <span class="emoji-option" data-emoji="🪙">🪙</span>
+                        <span class="emoji-option" data-emoji="🎒">🎒</span>
+                        <span class="emoji-option" data-emoji="🧸">🧸</span>
+                        <span class="emoji-option" data-emoji="🎯">🎯</span>
+                        <span class="emoji-option" data-emoji="🏀">🏀</span>
+                        <span class="emoji-option" data-emoji="🎨">🎨</span>
+                        <span class="emoji-option" data-emoji="🔨">🔨</span>
+                        <span class="emoji-option" data-emoji="🎸">🎸</span>
+                        <span class="emoji-option" data-emoji="🏆">🏆</span>
+                        <span class="emoji-option" data-emoji="💡">💡</span>
+                        <span class="emoji-option" data-emoji="🎭">🎭</span>
+                        <span class="emoji-option" data-emoji="🎪">🎪</span>
+                        <span class="emoji-option" data-emoji="🎲">🎲</span>
+                        <span class="emoji-option" data-emoji="🧩">🧩</span>
+                        <span class="emoji-option" data-emoji="🔔">🔔</span>
+                    </div>
+                    <input type="hidden" id="editSelectedEmoji" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="editObjectKeywords">Cuvinte cheie pentru AI:</label>
+                    <textarea id="editObjectKeywords" rows="3" required></textarea>
+                </div>
+
+                <button type="submit" class="btn btn-primary">💾 Salvează Modificările</button>
+                <button type="button" class="btn btn-secondary" onclick="closeEditModal()">❌ Anulează</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal pentru obiectele descoperite -->
+    <div id="discoveredModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">👀 Obiecte Descoperite</h3>
+                <button class="close" onclick="closeDiscoveredModal()">&times;</button>
+            </div>
+            <div id="discoveredList">
+                <!-- Lista obiectelor descoperite -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc, serverTimestamp, query, orderBy, where, Timestamp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+        import { getStorage, ref, listAll, getDownloadURL, deleteObject as deleteStorageObject } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js';
+
+        // Configurația Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyAA1ytLJrwh7JHSOwGQrf2t_5imgtiWLk4",
+            authDomain: "tabara-2025-95ff5.firebaseapp.com",
+            projectId: "tabara-2025-95ff5",
+            storageBucket: "tabara-2025-95ff5.firebasestorage.app",
+            messagingSenderId: "552618851743",
+            appId: "1:552618851743:web:tabara2025app"
+        };
+
+        // Inițializează Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const storage = getStorage(app);
+
+        let currentObjects = [];
+        let currentEditingId = null;
+        let selectedEmoji = '';
+        let editSelectedEmoji = '';
+
+        // Inițializare
+        document.addEventListener('DOMContentLoaded', function() {
+            setupEmojiPicker();
+            setupForms();
+            loadObjects();
+            loadStats();
+            setupModals();
+        });
+
+        // Configurează selectorul de emoji
+        function setupEmojiPicker() {
+            // Emoji picker pentru adăugare
+            const emojiOptions = document.querySelectorAll('#emojiPicker .emoji-option');
+            const emojiInput = document.getElementById('selectedEmoji');
+
+            emojiOptions.forEach(option => {
+                option.addEventListener('click', function() {
+                    emojiOptions.forEach(opt => opt.classList.remove('selected'));
+                    this.classList.add('selected');
+                    selectedEmoji = this.dataset.emoji;
+                    emojiInput.value = selectedEmoji;
+                });
+            });
+
+            // Emoji picker pentru editare
+            const editEmojiOptions = document.querySelectorAll('#editEmojiPicker .emoji-option');
+            const editEmojiInput = document.getElementById('editSelectedEmoji');
+
+            editEmojiOptions.forEach(option => {
+                option.addEventListener('click', function() {
+                    editEmojiOptions.forEach(opt => opt.classList.remove('selected'));
+                    this.classList.add('selected');
+                    editSelectedEmoji = this.dataset.emoji;
+                    editEmojiInput.value = editSelectedEmoji;
+                });
+            });
+        }
+
+        // Configurează formularele
+        function setupForms() {
+            document.getElementById('addObjectForm').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                await addObject();
+            });
+
+            document.getElementById('editObjectForm').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                await updateObject();
+            });
+        }
+
+        // Configurează modalurile
+        function setupModals() {
+            window.onclick = function(event) {
+                const editModal = document.getElementById('editModal');
+                const discoveredModal = document.getElementById('discoveredModal');
+                
+                if (event.target === editModal) {
+                    closeEditModal();
+                }
+                if (event.target === discoveredModal) {
+                    closeDiscoveredModal();
+                }
+            };
+        }
+
+        // Adaugă obiect nou
+        async function addObject() {
+            const name = document.getElementById('objectName').value.trim();
+            const emoji = document.getElementById('selectedEmoji').value;
+            const keywords = document.getElementById('objectKeywords').value.trim();
+            const addBtn = document.getElementById('addObjectBtn');
+
+            if (!name || !emoji || !keywords) {
+                showAlert('error', 'Te rog să completezi toate câmpurile!');
+                return;
+            }
+
+            // Verifică dacă obiectul există deja
+            const existingObject = currentObjects.find(obj => 
+                obj.name.toLowerCase() === name.toLowerCase()
+            );
+            
+            if (existingObject) {
+                showAlert('warning', `Obiectul "${name}" există deja în listă!`);
+                return;
+            }
+
+            try {
+                addBtn.disabled = true;
+                addBtn.textContent = '⏳ Se adaugă...';
+
+                const keywordsArray = keywords.split(',').map(k => k.trim()).filter(k => k);
+                
+                const objectData = {
+                    name: name,
+                    emoji: emoji,
+                    keywords: keywordsArray,
+                    createdAt: serverTimestamp(),
+                    active: true
+                };
+
+                await addDoc(collection(db, "hunt-objects"), objectData);
+                
+                showAlert('success', `✅ Obiectul "${name}" a fost adăugat cu succes!`);
+                
+                // Resetează formularul
+                document.getElementById('addObjectForm').reset();
+                document.getElementById('selectedEmoji').value = '';
+                document.querySelectorAll('#emojiPicker .emoji-option').forEach(opt => opt.classList.remove('selected'));
+                selectedEmoji = '';
+                
+                // Reîncarcă lista
+                await loadObjects();
+                await loadStats();
+                
+            } catch (error) {
+                console.error('Eroare la adăugarea obiectului:', error);
+                showAlert('error', 'Eroare la adăugarea obiectului. Încearcă din nou!');
+            } finally {
+                addBtn.disabled = false;
+                addBtn.textContent = '➕ Adaugă Obiect';
+            }
+        }
+
+        // Încarcă obiectele din Firestore
+        async function loadObjects() {
+            const loading = document.getElementById('loading');
+            const objectsList = document.getElementById('objectsList');
+            
+            loading.style.display = 'block';
+            objectsList.innerHTML = '';
+
+            try {
+                const q = query(collection(db, "hunt-objects"), orderBy("createdAt", "desc"));
+                const querySnapshot = await getDocs(q);
+                
+                currentObjects = [];
+                
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    currentObjects.push({
+                        id: doc.id,
+                        ...data
+                    });
+                });
+
+                displayObjects();
+                
+            } catch (error) {
+                console.error('Eroare la încărcarea obiectelor:', error);
+                showAlert('error', 'Eroare la încărcarea obiectelor din baza de date.');
+            } finally {
+                loading.style.display = 'none';
+            }
+        }
+
+        // Afișează obiectele în listă
+        function displayObjects() {
+            const objectsList = document.getElementById('objectsList');
+            
+            if (currentObjects.length === 0) {
+                objectsList.innerHTML = '<p style="text-align: center; color: #7f8c8d; padding: 20px;">Nu există obiecte în baza de date.</p>';
+                return;
+            }
+
+            objectsList.innerHTML = currentObjects.map(obj => `
+                <div class="object-item">
+                    <div class="object-info">
+                        <span class="object-emoji">${obj.emoji}</span>
+                        <div class="object-details">
+                            <h4>${obj.name}</h4>
+                            <div class="object-keywords">${obj.keywords ? obj.keywords.join(', ') : 'Nu sunt cuvinte cheie'}</div>
+                        </div>
+                    </div>
+                    <div class="object-actions">
+                        <button class="btn btn-secondary" onclick="editObject('${obj.id}')">✏️ Editează</button>
+                        <button class="btn btn-danger" onclick="deleteObject('${obj.id}', '${obj.name}')">🗑️ Șterge</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Editează obiect
+        function editObject(objectId) {
+            const obj = currentObjects.find(o => o.id === objectId);
+            if (!obj) {
+                showAlert('error', 'Obiectul nu a fost găsit!');
+                return;
+            }
+
+            currentEditingId = objectId;
+            
+            // Populează formularul de editare
+            document.getElementById('editObjectName').value = obj.name;
+            document.getElementById('editObjectKeywords').value = obj.keywords ? obj.keywords.join(', ') : '';
+            
+            // Selectează emoji-ul
+            const editEmojiOptions = document.querySelectorAll('#editEmojiPicker .emoji-option');
+            editEmojiOptions.forEach(opt => {
+                opt.classList.remove('selected');
+                if (opt.dataset.emoji === obj.emoji) {
+                    opt.classList.add('selected');
+                    editSelectedEmoji = obj.emoji;
+                    document.getElementById('editSelectedEmoji').value = obj.emoji;
+                }
+            });
+            
+            // Afișează modalul
+            document.getElementById('editModal').style.display = 'block';
+        }
+
+        // Actualizează obiect
+        async function updateObject() {
+            if (!currentEditingId) return;
+
+            const name = document.getElementById('editObjectName').value.trim();
+            const emoji = document.getElementById('editSelectedEmoji').value;
+            const keywords = document.getElementById('editObjectKeywords').value.trim();
+
+            if (!name || !emoji || !keywords) {
+                showAlert('error', 'Te rog să completezi toate câmpurile!');
+                return;
+            }
+
+            // Verifică dacă numele există deja (excluzând obiectul curent)
+            const existingObject = currentObjects.find(obj => 
+                obj.name.toLowerCase() === name.toLowerCase() && obj.id !== currentEditingId
+            );
+            
+            if (existingObject) {
+                showAlert('warning', `Obiectul "${name}" există deja în listă!`);
+                return;
+            }
+
+            try {
+                const keywordsArray = keywords.split(',').map(k => k.trim()).filter(k => k);
+                
+                await updateDoc(doc(db, "hunt-objects", currentEditingId), {
+                    name: name,
+                    emoji: emoji,
+                    keywords: keywordsArray,
+                    updatedAt: serverTimestamp()
+                });
+
+                showAlert('success', `✅ Obiectul "${name}" a fost actualizat cu succes!`);
+                closeEditModal();
+                await loadObjects();
+                await loadStats();
+
+            } catch (error) {
+                console.error('Eroare la actualizarea obiectului:', error);
+                showAlert('error', 'Eroare la actualizarea obiectului. Încearcă din nou!');
+            }
+        }
+
+        // Închide modalul de editare
+        function closeEditModal() {
+            document.getElementById('editModal').style.display = 'none';
+            currentEditingId = null;
+            editSelectedEmoji = '';
+            document.getElementById('editObjectForm').reset();
+            document.querySelectorAll('#editEmojiPicker .emoji-option').forEach(opt => opt.classList.remove('selected'));
+        }
+
+        // Șterge obiect
+        async function deleteObject(objectId, objectName) {
+            if (!confirm(`Ești sigur că vrei să ștergi obiectul "${objectName}"?`)) {
+                return;
+            }
+
+            try {
+                await deleteDoc(doc(db, "hunt-objects", objectId));
+                showAlert('success', `✅ Obiectul "${objectName}" a fost șters cu succes!`);
+                await loadObjects();
+                await loadStats();
+            } catch (error) {
+                console.error('Eroare la ștergerea obiectului:', error);
+                showAlert('error', 'Eroare la ștergerea obiectului. Încearcă din nou!');
+            }
+        }
+
+        // Încarcă statisticile
+        async function loadStats() {
+            try {
+                // Total obiecte
+                const objectsSnapshot = await getDocs(collection(db, "hunt-objects"));
+                document.getElementById('totalObjects').textContent = objectsSnapshot.size;
+
+                // Obiecte descoperite azi
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const todayTimestamp = Timestamp.fromDate(today);
+                
+                const discoveredQuery = query(
+                    collection(db, "discovered-objects"), 
+                    where("timestamp", ">=", todayTimestamp)
+                );
+                const discoveredSnapshot = await getDocs(discoveredQuery);
+                document.getElementById('discoveredToday').textContent = discoveredSnapshot.size;
+
+                // Total poze
+                const allDiscoveredSnapshot = await getDocs(collection(db, "discovered-objects"));
+                document.getElementById('totalPhotos').textContent = allDiscoveredSnapshot.size;
+
+            } catch (error) {
+                console.error('Eroare la încărcarea statisticilor:', error);
+            }
+        }
+
+        // Exportă obiectele în JSON
+        function exportObjects() {
+            if (currentObjects.length === 0) {
+                showAlert('warning', 'Nu există obiecte de exportat!');
+                return;
+            }
+
+            const exportData = currentObjects.map(obj => ({
+                name: obj.name,
+                emoji: obj.emoji,
+                keywords: obj.keywords || []
+            }));
+
+            const dataStr = JSON.stringify(exportData, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(dataBlob);
+            link.download = `obiecte-vanatoare-${new Date().toISOString().split('T')[0]}.json`;
+            link.click();
+            
+            showAlert('success', '✅ Lista de obiecte a fost exportată!');
+        }
+
+        // Importă obiecte din JSON
+        async function importObjects(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            try {
+                const text = await file.text();
+                const objects = JSON.parse(text);
+                
+                if (!Array.isArray(objects)) {
+                    throw new Error('Fișierul nu conține o listă validă de obiecte');
+                }
+
+                let imported = 0;
+                let skipped = 0;
+
+                for (const obj of objects) {
+                    if (obj.name && obj.emoji && obj.keywords) {
+                        // Verifică dacă obiectul există deja
+                        const existingObject = currentObjects.find(existing => 
+                            existing.name.toLowerCase() === obj.name.toLowerCase()
+                        );
+
+                        if (!existingObject) {
+                            await addDoc(collection(db, "hunt-objects"), {
+                                name: obj.name,
+                                emoji: obj.emoji,
+                                keywords: Array.isArray(obj.keywords) ? obj.keywords : [obj.keywords],
+                                createdAt: serverTimestamp(),
+                                active: true,
+                                imported: true
+                            });
+                            imported++;
+                        } else {
+                            skipped++;
+                        }
+                    }
+                }
+                
+                let message = `✅ ${imported} obiecte au fost importate cu succes!`;
+                if (skipped > 0) {
+                    message += ` (${skipped} obiecte au fost omise pentru că există deja)`;
+                }
+                
+                showAlert('success', message);
+                await loadObjects();
+                await loadStats();
+                
+            } catch (error) {
+                console.error('Eroare la importul obiectelor:', error);
+                showAlert('error', 'Eroare la importul fișierului. Verifică formatul JSON!');
+            }
+            
+            event.target.value = '';
+        }
+
+        // Vezi obiectele descoperite
+        async function viewDiscoveredObjects() {
+            try {
+                const q = query(collection(db, "discovered-objects"), orderBy("timestamp", "desc"));
+                const querySnapshot = await getDocs(q);
+                let discovered = [];
+                
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    discovered.push({
+                        id: doc.id,
+                        ...data
+                    });
+                });
+                
+                const discoveredList = document.getElementById('discoveredList');
+                
+                if (discovered.length === 0) {
+                    discoveredList.innerHTML = '<p style="text-align: center; color: #7f8c8d; padding: 20px;">Nu există încă obiecte descoperite.</p>';
+                } else {
+                    discoveredList.innerHTML = discovered.map(obj => `
+                        <div class="discovered-item">
+                            <span class="discovered-emoji">${obj.emoji || '📷'}</span>
+                            <div class="discovered-info">
+                                <div class="discovered-name">${obj.objectName || 'Obiect necunoscut'}</div>
+                                <div class="discovered-time">${obj.timestamp ? obj.timestamp.toDate().toLocaleString('ro-RO') : 'Data necunoscută'}</div>
+                            </div>
+                            ${obj.photoURL ? `<img src="${obj.photoURL}" alt="Poză" class="discovered-photo" onclick="window.open('${obj.photoURL}', '_blank')">` : ''}
+                        </div>
+                    `).join('');
+                }
+                
+                document.getElementById('discoveredModal').style.display = 'block';
+                
+            } catch (error) {
+                console.error('Eroare la încărcarea obiectelor descoperite:', error);
+                showAlert('error', 'Eroare la încărcarea datelor.');
+            }
+        }
+
+        // Închide modalul obiectelor descoperite
+        function closeDiscoveredModal() {
+            document.getElementById('discoveredModal').style.display = 'none';
+        }
+
+        // Descarcă toate pozele
+        async function downloadAllPhotos() {
+            showAlert('info', '⏳ Se pregătește descărcarea pozelor...');
+            
+            try {
+                const querySnapshot = await getDocs(collection(db, "discovered-objects"));
+                const photos = [];
+                
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    if (data.photoURL) {
+                        photos.push({
+                            url: data.photoURL,
+                            name: `${data.objectName || 'obiect'}_${data.timestamp ? data.timestamp.toDate().toISOString().split('T')[0] : 'unknown'}.jpg`
+                        });
+                    }
+                });
+
+                if (photos.length === 0) {
+                    showAlert('warning', 'Nu există poze de descărcat!');
+                    return;
+                }
+
+                // Creează un zip cu pozele (simulat prin descărcarea individuală)
+                showAlert('info', `Se vor descărca ${photos.length} poze...`);
+                
+                for (let i = 0; i < photos.length; i++) {
+                    const photo = photos[i];
+                    try {
+                        const response = await fetch(photo.url);
+                        const blob = await response.blob();
+                        const link = document.createElement('a');
+                        link.href = URL.createObjectURL(blob);
+                        link.download = photo.name;
+                        link.click();
+                        
+                        // Întârziere pentru a evita spam-ul de descărcări
+                        if (i < photos.length - 1) {
+                            await new Promise(resolve => setTimeout(resolve, 500));
+                        }
+                    } catch (error) {
+                        console.error(`Eroare la descărcarea pozei ${photo.name}:`, error);
+                    }
+                }
+                
+                showAlert('success', `✅ S-au inițiat descărcările pentru ${photos.length} poze!`);
+                
+            } catch (error) {
+                console.error('Eroare la descărcarea pozelor:', error);
+                showAlert('error', 'Eroare la descărcarea pozelor.');
+            }
+        }
+
+        // Șterge toate datele
+        async function clearAllData() {
+            if (!confirm('⚠️ ATENȚIE! Aceasta va șterge TOATE obiectele și pozele. Ești absolut sigur?')) {
+                return;
+            }
+            
+            if (!confirm('Ultima confirmare: Toate datele vor fi pierdute definitiv!')) {
+                return;
+            }
+
+            try {
+                showAlert('info', '⏳ Se șterg datele...');
+                
+                // Șterge obiectele
+                const objectsSnapshot = await getDocs(collection(db, "hunt-objects"));
+                const deletePromises = [];
+                
+                objectsSnapshot.forEach((doc) => {
+                    deletePromises.push(deleteDoc(doc.ref));
+                });
+                
+                // Șterge obiectele descoperite
+                const discoveredSnapshot = await getDocs(collection(db, "discovered-objects"));
+                discoveredSnapshot.forEach((doc) => {
+                    deletePromises.push(deleteDoc(doc.ref));
+                });
+                
+                await Promise.all(deletePromises);
+                
+                showAlert('success', '✅ Toate datele au fost șterse cu succes!');
+                await loadObjects();
+                await loadStats();
+                
+            } catch (error) {
+                console.error('Eroare la ștergerea datelor:', error);
+                showAlert('error', 'Eroare la ștergerea datelor. Încearcă din nou!');
+            }
+        }
+
+        // Afișează alertă
+        function showAlert(type, message) {
+            const alertsContainer = document.getElementById('alerts');
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type}`;
+            alertDiv.textContent = message;
+            
+            alertsContainer.appendChild(alertDiv);
+            
+            setTimeout(() => {
+                if (alertDiv.parentElement) {
+                    alertDiv.remove();
+                }
+            }, 5000);
+        }
+
+        // Fă funcțiile disponibile global
+        window.loadObjects = loadObjects;
+        window.editObject = editObject;
+        window.deleteObject = deleteObject;
+        window.exportObjects = exportObjects;
+        window.importObjects = importObjects;
+        window.viewDiscoveredObjects = viewDiscoveredObjects;
+        window.downloadAllPhotos = downloadAllPhotos;
+        window.clearAllData = clearAllData;
+        window.closeEditModal = closeEditModal;
+        window.closeDiscoveredModal = closeDiscoveredModal;
+    </script>
+</body>
+</html>

@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Galeria Obiectelor Descoperite</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        .stats-bar {
+            display: flex;
+            justify-content: space-around;
+            background: linear-gradient(135deg, #f8f9fa, #ffffff);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: bold;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+
+        .filters {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9em;
+            box-shadow: 0 3px 10px rgba(102, 126, 234, 0.3);
+        }
+
+        .filter-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .filter-btn.active {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            box-shadow: 0 3px 10px rgba(40, 167, 69, 0.3);
+        }
+
+        .gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .gallery-item {
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .gallery-item:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .image-container {
+            position: relative;
+            height: 250px;
+            overflow: hidden;
+        }
+
+        .gallery-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+
+        .gallery-item:hover .gallery-image {
+            transform: scale(1.05);
+        }
+
+        .object-badge {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.9em;
+            color: #333;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .object-emoji {
+            font-size: 1.5em;
+            margin-right: 8px;
+        }
+
+        .item-info {
+            padding: 20px;
+        }
+
+        .item-title {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .item-date {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 15px;
+        }
+
+        .item-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .view-btn {
+            background: linear-gradient(135deg, #17a2b8, #138496);
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.85em;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .view-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(23, 162, 184, 0.3);
+        }
+
+        .delete-btn {
+            background: linear-gradient(135deg, #dc3545, #c82333);
+            color: white;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.3s ease;
+            width: 35px;
+            height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .delete-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(220, 53, 69, 0.3);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: #666;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+
+        .empty-emoji {
+            font-size: 4em;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .back-btn {
+            background: linear-gradient(135deg, #6c757d, #5a6268);
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            margin-bottom: 20px;
+        }
+
+        .back-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(108, 117, 125, 0.3);
+        }
+
+        .refresh-btn {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.3s ease;
+            margin-left: 10px;
+        }
+
+        .refresh-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(40, 167, 69, 0.3);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            max-width: 90%;
+            max-height: 90%;
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-image {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            color: white;
+            font-size: 2em;
+            cursor: pointer;
+            background: rgba(0, 0, 0, 0.5);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .close-modal:hover {
+            background: rgba(0, 0, 0, 0.8);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+            
+            .gallery {
+                grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+                gap: 20px;
+            }
+            
+            h1 {
+                font-size: 2em;
+            }
+            
+            .stats-bar {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .filters {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="back-btn">← Înapoi la Joc</a>
+        <button class="refresh-btn" onclick="loadGallery()">🔄 Reîncarcă</button>
+        
+        <h1>🖼️ Galeria Obiectelor</h1>
+        <p class="subtitle">Toate obiectele descoperite de jucători</p>
+        
+        <div class="stats-bar" id="statsBar">
+            <div class="stat-item">
+                <div class="stat-number" id="totalObjects">0</div>
+                <div class="stat-label">Total Obiecte</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="todayObjects">0</div>
+                <div class="stat-label">Astăzi</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="uniqueTypes">0</div>
+                <div class="stat-label">Tipuri Unice</div>
+            </div>
+        </div>
+
+        <div class="filters" id="filters">
+            <button class="filter-btn active" onclick="filterObjects('all')">Toate</button>
+            <button class="filter-btn" onclick="filterObjects('today')">Astăzi</button>
+            <button class="filter-btn" onclick="filterObjects('yesterday')">Ieri</button>
+            <button class="filter-btn" onclick="filterObjects('week')">Această Săptămână</button>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Se încarcă galeria...</p>
+        </div>
+
+        <div class="empty-state" id="emptyState" style="display: none;">
+            <div class="empty-emoji">📭</div>
+            <h3>Niciun obiect încă</h3>
+            <p>Obiectele descoperite vor apărea aici.</p>
+        </div>
+
+        <div class="gallery" id="gallery"></div>
+    </div>
+
+    <!-- Modal pentru vizualizarea imaginilor -->
+    <div class="modal" id="imageModal">
+        <div class="close-modal" onclick="closeModal()">&times;</div>
+        <div class="modal-content">
+            <img class="modal-image" id="modalImage" src="" alt="">
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getFirestore, collection, getDocs, query, orderBy, deleteDoc, doc, where, Timestamp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+        import { getStorage, ref, deleteObject } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js';
+
+        // Configurația Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyAA1ytLJrwh7JHSOwGQrf2t_5imgtiWLk4",
+            authDomain: "tabara-2025-95ff5.firebaseapp.com",
+            projectId: "tabara-2025-95ff5",
+            storageBucket: "tabara-2025-95ff5.firebasestorage.app",
+            messagingSenderId: "552618851743",
+            appId: "1:552618851743:web:tabara2025app"
+        };
+
+        // Inițializează Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const storage = getStorage(app);
+
+        // Emoji-uri pentru obiecte (să corespundă cu cele din joc)
+        const objectEmojis = {
+            "Cană": "☕",
+            "Telefon": "📱",
+            "Carte": "📚",
+            "Ochelari": "👓",
+            "Ceas": "⌚",
+            "Pix": "✏️",
+            "Plantă": "🌱",
+            "Cheie": "🔑",
+            "Baterie": "🔋",
+            "Monedă": "🪙"
+        };
+
+        let allObjects = [];
+        let filteredObjects = [];
+        let currentFilter = 'all';
+
+        // Încarcă galeria
+        async function loadGallery() {
+            const loading = document.getElementById('loading');
+            const gallery = document.getElementById('gallery');
+            const emptyState = document.getElementById('emptyState');
+            
+            loading.style.display = 'block';
+            gallery.style.display = 'none';
+            emptyState.style.display = 'none';
+
+            try {
+                const q = query(collection(db, "discovered-objects"), orderBy("timestamp", "desc"));
+                const querySnapshot = await getDocs(q);
+                
+                allObjects = [];
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    allObjects.push({
+                        id: doc.id,
+                        ...data,
+                        timestamp: data.timestamp?.toDate() || new Date(data.uploadedAt)
+                    });
+                });
+
+                updateStats();
+                filterObjects(currentFilter);
+
+            } catch (error) {
+                console.error("Eroare la încărcarea obiectelor:", error);
+                loading.style.display = 'none';
+                emptyState.style.display = 'block';
+                document.querySelector('.empty-state h3').textContent = 'Eroare la încărcare';
+                document.querySelector('.empty-state p').textContent = 'Nu s-au putut încărca obiectele.';
+            }
+        }
+
+        // Actualizează statisticile
+        function updateStats() {
+            const totalObjects = allObjects.length;
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            const todayObjects = allObjects.filter(obj => {
+                const objDate = new Date(obj.timestamp);
+                objDate.setHours(0, 0, 0, 0);
+                return objDate.getTime() === today.getTime();
+            }).length;
+
+            const uniqueTypes = new Set(allObjects.map(obj => obj.objectName)).size;
+
+            document.getElementById('totalObjects').textContent = totalObjects;
+            document.getElementById('todayObjects').textContent = todayObjects;
+            document.getElementById('uniqueTypes').textContent = uniqueTypes;
+        }
+
+        // Filtrează obiectele
+        window.filterObjects = function(filter) {
+            const now = new Date();
+            
+            // Actualizează butoanele de filtru
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event?.target?.classList.add('active') || 
+            document.querySelector(`[onclick="filterObjects('${filter}')"]`).classList.add('active');
+            
+            currentFilter = filter;
+            
+            switch(filter) {
+                case 'all':
+                    filteredObjects = [...allObjects];
+                    break;
+                case 'today':
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    filteredObjects = allObjects.filter(obj => {
+                        const objDate = new Date(obj.timestamp);
+                        objDate.setHours(0, 0, 0, 0);
+                        return objDate.getTime() === today.getTime();
+                    });
+                    break;
+                case 'yesterday':
+                    const yesterday = new Date();
+                    yesterday.setDate(yesterday.getDate() - 1);
+                    yesterday.setHours(0, 0, 0, 0);
+                    filteredObjects = allObjects.filter(obj => {
+                        const objDate = new Date(obj.timestamp);
+                        objDate.setHours(0, 0, 0, 0);
+                        return objDate.getTime() === yesterday.getTime();
+                    });
+                    break;
+                case 'week':
+                    const weekAgo = new Date();
+                    weekAgo.setDate(weekAgo.getDate() - 7);
+                    filteredObjects = allObjects.filter(obj => 
+                        new Date(obj.timestamp) >= weekAgo
+                    );
+                    break;
+            }
+            
+            renderGallery();
+        }
+
+        // Randează galeria
+        function renderGallery() {
+            const loading = document.getElementById('loading');
+            const gallery = document.getElementById('gallery');
+            const emptyState = document.getElementById('emptyState');
+            
+            loading.style.display = 'none';
+            
+            if (filteredObjects.length === 0) {
+                gallery.style.display = 'none';
+                emptyState.style.display = 'block';
+                return;
+            }
+            
+            gallery.style.display = 'grid';
+            emptyState.style.display = 'none';
+            
+            gallery.innerHTML = filteredObjects.map(obj => `
+                <div class="gallery-item">
+                    <div class="image-container">
+                        <img class="gallery-image" src="${obj.imageUrl}" alt="${obj.objectName}" 
+                             onclick="openModal('${obj.imageUrl}', '${obj.objectName}')"
+                             onerror="this.src='data:image/svg+xml,<svg xmlns=\\"http://www.w3.org/2000/svg\\" width=\\"300\\" height=\\"250\\" viewBox=\\"0 0 300 250\\"><rect width=\\"300\\" height=\\"250\\" fill=\\"%23f8f9fa\\"/><text x=\\"150\\" y=\\"125\\" text-anchor=\\"middle\\" fill=\\"%23666\\" font-family=\\"Arial\\" font-size=\\"16\\">Imagine nedisponibilă</text></svg>'">
+                        <div class="object-badge">
+                            <span class="object-emoji">${objectEmojis[obj.objectName] || '📦'}</span>
+                            ${obj.objectName}
+                        </div>
+                    </div>
+                    <div class="item-info">
+                        <div class="item-title">
+                            <span>${objectEmojis[obj.objectName] || '📦'}</span>
+                            ${obj.objectName}
+                        </div>
+                        <div class="item-date">
+                            📅 ${formatDate(obj.timestamp)}
+                        </div>
+                        <div class="item-actions">
+                            <a href="${obj.imageUrl}" target="_blank" class="view-btn">
+                                👁️ Vezi Original
+                            </a>
+                            <button class="delete-btn" onclick="deleteObject('${obj.id}', '${obj.fileName}')" title="Șterge">
+                                🗑️
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Formatează data
+        function formatDate(date) {
+            const now = new Date();
+            const diff = now - date;
+            const minutes = Math.floor(diff / 60000);
+            const hours = Math.floor(minutes / 60);
+            const days = Math.floor(hours / 24);
+            
+            if (minutes < 1) return 'Acum';
+            if (minutes < 60) return `Acum ${minutes} min`;
+            if (hours < 24) return `Acum ${hours} ore`;
+            if (days < 7) return `Acum ${days} zile`;
+            
+            return date.toLocaleDateString('ro-RO', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        // Deschide modalul pentru imagine
+        window.openModal = function(imageUrl, objectName) {
+            const modal = document.getElementById('imageModal');
+            const modalImage = document.getElementById('modalImage');
+            
+            modalImage.src = imageUrl;
+            modalImage.alt = objectName;
+            modal.style.display = 'block';
+        }
+
+        // Închide modalul
+        window.closeModal = function() {
+            document.getElementById('imageModal').style.display = 'none';
+        }
+
+        // Închide modalul la click în exterior
+        window.onclick = function(event) {
+            const modal = document.getElementById('imageModal');
+            if (event.target === modal) {
+                modal.style.display = 'none';
+            }
+        }
+
+        // Șterge un obiect
+        window.deleteObject = async function(objectId, fileName) {
+            if (!confirm('Ești sigur că vrei să ștergi acest obiect?')) {
+                return;
+            }
+            
+            try {
+                // Șterge documentul din Firestore
+                await deleteDoc(doc(db, "discovered-objects", objectId));
+                
+                // Șterge imaginea din Storage
+                if (fileName) {
+                    const imageRef = ref(storage, fileName);
+                    await deleteObject(imageRef);
+                }
+                
+                // Reîncarcă galeria
+                await loadGallery();
+                
+            } catch (error) {
+                console.error("Eroare la ștergerea obiectului:", error);
+                alert('Eroare la ștergerea obiectului!');
+            }
+        }
+
+        // Fă funcția disponibilă global
+        window.loadGallery = loadGallery;
+
+        // Încarcă galeria la pornire
+        loadGallery();
+    </script>
+</body>
+</html>
