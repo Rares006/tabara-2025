@@ -675,28 +675,38 @@
         }
 
         // Raportează imaginea pentru review manual
-        function reportImage(base64, objectIndex) {
-            const obj = objects[objectIndex];
-            
-            reportedImages.push({
-                image: base64,
-                objectName: obj.name,
-                timestamp: new Date().toISOString(),
-                userAgent: navigator.userAgent
-            });
-            
-            // Marchează ca completat după raportare
-            completedObjects.add(objectIndex);
-            
-            showResult('success', `📝 Mulțumim pentru raport! Poza a fost trimisă pentru verificare manuală.<br>🎉 ${obj.name} a fost marcat ca găsit!`);
-            
-            selectedObject = null;
-            renderObjectList();
-            updateProgress();
-            
-            // În realitate, aici ai trimite raportul la server
-            console.log('Raport trimis:', reportedImages[reportedImages.length - 1]);
-        }
+async function reportImage(base64, objectIndex) {
+    const obj = objects[objectIndex];
+    
+    try {
+        // Salvează raportul în Firestore
+        const docRef = await addDoc(collection(db, "reported-images"), {
+            objectName: obj.name,
+            objectIndex: objectIndex,
+            imageUrl: base64, // Salvează base64 temporar
+            timestamp: serverTimestamp(),
+            status: 'pending',
+            userAgent: navigator.userAgent,
+            reportedAt: new Date().toISOString()
+        });
+        
+        console.log("Raport salvat cu ID:", docRef.id);
+        
+        // Marchează ca completat după raportare
+        completedObjects.add(objectIndex);
+        
+        showResult('success', `📝 Mulțumim pentru raport! Poza a fost trimisă pentru verificare manuală.<br>🎉 ${obj.name} a fost marcat ca găsit!`);
+        
+    } catch (error) {
+        console.error("Eroare la salvarea raportului:", error);
+        showResult('error', '❌ A apărut o eroare la trimiterea raportului. Încearcă din nou!');
+        return;
+    }
+    
+    selectedObject = null;
+    renderObjectList();
+    updateProgress();
+}
 
         // Afișează rezultatul
         function showResult(type, message) {
@@ -732,7 +742,7 @@
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
         import { getStorage, ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js';
         import { getFirestore, collection, addDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
-
+        
         // Configurația Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyAA1ytLJrwh7JHSOwGQrf2t_5imgtiWLk4",
