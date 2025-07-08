@@ -675,22 +675,14 @@
         }
 
         // Raportează imaginea pentru review manual
-async function reportImage(base64, objectIndex) {
+        async function reportImage(base64, objectIndex) {
     const obj = objects[objectIndex];
     
     try {
-        // Salvează raportul în Firestore
-        const docRef = await addDoc(collection(db, "reported-images"), {
-            objectName: obj.name,
-            objectIndex: objectIndex,
-            imageUrl: base64, // Salvează base64 temporar
-            timestamp: serverTimestamp(),
-            status: 'pending',
-            userAgent: navigator.userAgent,
-            reportedAt: new Date().toISOString()
-        });
+        // Folosește funcția Firebase
+        const docId = await window.reportImageToFirebase(obj.name, objectIndex, base64);
         
-        console.log("Raport salvat cu ID:", docRef.id);
+        console.log("Raport salvat cu ID:", docId);
         
         // Marchează ca completat după raportare
         completedObjects.add(objectIndex);
@@ -742,7 +734,7 @@ async function reportImage(base64, objectIndex) {
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
         import { getStorage, ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js';
         import { getFirestore, collection, addDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
-        
+
         // Configurația Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyAA1ytLJrwh7JHSOwGQrf2t_5imgtiWLk4",
@@ -794,7 +786,24 @@ async function reportImage(base64, objectIndex) {
         }
 
         // Fă funcția disponibilă global
-        window.uploadImageToFirebase = uploadImageToFirebase;
+window.uploadImageToFirebase = uploadImageToFirebase;
+
+// Funcție pentru raportarea imaginilor
+async function reportImageToFirebase(objectName, objectIndex, base64Image) {
+    const docRef = await addDoc(collection(db, "reported-images"), {
+        objectName: objectName,
+        objectIndex: objectIndex,
+        imageUrl: base64Image,
+        timestamp: serverTimestamp(),
+        status: 'pending',
+        userAgent: navigator.userAgent,
+        reportedAt: new Date().toISOString()
+    });
+    return docRef.id;
+}
+
+// Fă funcția disponibilă global
+window.reportImageToFirebase = reportImageToFirebase;
     </script>
 </body>
 </html>
