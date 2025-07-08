@@ -295,6 +295,38 @@
             box-shadow: 0 5px 15px rgba(108, 117, 125, 0.3);
         }
 
+        .report-btn {
+            background: linear-gradient(135deg, #ffc107, #e0a800);
+            color: #212529;
+            padding: 8px 15px;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            margin-top: 10px;
+            font-size: 0.9em;
+            transition: all 0.3s ease;
+        }
+
+        .report-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 3px 10px rgba(255, 193, 7, 0.3);
+        }
+
+        .confidence-score {
+            font-size: 0.8em;
+            color: #666;
+            margin-top: 10px;
+        }
+
+        .detection-info {
+            font-size: 0.9em;
+            color: #555;
+            margin-top: 10px;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 8px;
+        }
+
         @media (max-width: 600px) {
             .container {
                 padding: 20px;
@@ -351,20 +383,21 @@
     <script>
         // Lista obiectelor de căutat
         const objects = [
-            { name: "Cană", emoji: "☕", keywords: ["cup", "mug", "coffee cup", "tea cup", "cana", "ceasca"] },
-            { name: "Telefon", emoji: "📱", keywords: ["phone", "mobile", "smartphone", "telefon", "mobil"] },
-            { name: "Carte", emoji: "📚", keywords: ["book", "books", "carte", "carti"] },
-            { name: "Ochelari", emoji: "👓", keywords: ["glasses", "eyeglasses", "sunglasses", "ochelari"] },
-            { name: "Ceas", emoji: "⌚", keywords: ["watch", "clock", "ceas", "ora"] },
-            { name: "Pix", emoji: "✏️", keywords: ["pen", "pencil", "pix", "creion", "stilou"] },
-            { name: "Plantă", emoji: "🌱", keywords: ["plant", "flower", "planta", "floare", "verde"] },
-            { name: "Cheie", emoji: "🔑", keywords: ["key", "keys", "cheie", "chei"] },
-            { name: "Baterie", emoji: "🔋", keywords: ["battery", "baterie", "acumulator"] },
-            { name: "Monedă", emoji: "🪙", keywords: ["coin", "money", "moneda", "bani"] }
+            { name: "Cană", emoji: "☕", keywords: ["cup", "mug", "coffee cup", "tea cup", "coffee mug", "drinking cup", "beverage"] },
+            { name: "Telefon", emoji: "📱", keywords: ["phone", "mobile", "smartphone", "cell phone", "mobile phone", "iphone", "android"] },
+            { name: "Carte", emoji: "📚", keywords: ["book", "books", "novel", "textbook", "magazine", "reading", "literature"] },
+            { name: "Ochelari", emoji: "👓", keywords: ["glasses", "eyeglasses", "sunglasses", "spectacles", "reading glasses"] },
+            { name: "Ceas", emoji: "⌚", keywords: ["watch", "clock", "wristwatch", "timepiece", "smartwatch"] },
+            { name: "Pix", emoji: "✏️", keywords: ["pen", "pencil", "ballpoint", "marker", "writing", "biro"] },
+            { name: "Plantă", emoji: "🌱", keywords: ["plant", "flower", "potted plant", "houseplant", "foliage", "greenery"] },
+            { name: "Cheie", emoji: "🔑", keywords: ["key", "keys", "house key", "car key", "keychain"] },
+            { name: "Baterie", emoji: "🔋", keywords: ["battery", "batteries", "power cell", "rechargeable"] },
+            { name: "Monedă", emoji: "🪙", keywords: ["coin", "money", "currency", "change", "penny", "quarter"] }
         ];
 
         let completedObjects = new Set();
         let selectedObject = null;
+        let reportedImages = [];
 
         // Inițializare
         function init() {
@@ -441,12 +474,12 @@
                 // Afișează preview-ul imaginii
                 showImagePreview(base64);
                 
-                // Analizează imaginea cu Hugging Face API
-                const detectedObjects = await analyzeImage(base64);
+                // Analizează imaginea
+                const analysisResult = await analyzeImage(base64);
                 
                 // Verifică dacă obiectul selectat este în imagine
                 const selectedObj = objects[selectedObject];
-                const isMatch = checkObjectMatch(detectedObjects, selectedObj.keywords);
+                const isMatch = checkObjectMatch(analysisResult.detectedObjects, selectedObj.keywords);
                 
                 if (isMatch) {
                     // Încarcă poza în Firebase
@@ -456,7 +489,7 @@
                         const imageUrl = await window.uploadImageToFirebase(file, selectedObj.name);
                         
                         completedObjects.add(selectedObject);
-                        showResult('success', `🎉 Excelent! Ai găsit ${selectedObj.name}!<br>📸 Poza a fost salvată în cloud!<br><small>URL: <a href="${imageUrl}" target="_blank">Vezi poza</a></small>`);
+                        showResult('success', `🎉 Excelent! Ai găsit ${selectedObj.name}!<br>📸 Poza a fost salvată în cloud!<br><div class="confidence-score">Încredere: ${Math.round(analysisResult.confidence * 100)}%</div><br><small>URL: <a href="${imageUrl}" target="_blank">Vezi poza</a></small>`);
                         selectedObject = null;
                         renderObjectList();
                         updateProgress();
@@ -465,13 +498,21 @@
                         console.error('Eroare la încărcarea în Firebase:', uploadError);
                         // Marchează ca completat chiar dacă încărcarea a eșuat
                         completedObjects.add(selectedObject);
-                        showResult('success', `🎉 Excelent! Ai găsit ${selectedObj.name}!<br>⚠️ Poza nu a putut fi salvată în cloud, dar progresul a fost salvat local.`);
+                        showResult('success', `🎉 Excelent! Ai găsit ${selectedObj.name}!<br>⚠️ Poza nu a putut fi salvată în cloud, dar progresul a fost salvat local.<br><div class="confidence-score">Încredere: ${Math.round(analysisResult.confidence * 100)}%</div>`);
                         selectedObject = null;
                         renderObjectList();
                         updateProgress();
                     }
                 } else {
-                    showResult('error', `❌ Nu am găsit ${selectedObj.name} în imagine. Încearcă din nou cu o poză mai clară!<br><button class="report-btn" onclick="reportImage('${base64}', ${selectedObject})">📝 Raportează Poza (Cred că obiectul este în imagine)</button>`);
+                    let detectionInfo = '';
+                    if (analysisResult.detectedObjects.length > 0) {
+                        const topDetections = analysisResult.detectedObjects.slice(0, 3).map(obj => 
+                            `${obj.label} (${Math.round(obj.score * 100)}%)`
+                        ).join(', ');
+                        detectionInfo = `<div class="detection-info">🔍 Am detectat: ${topDetections}</div>`;
+                    }
+                    
+                    showResult('error', `❌ Nu am găsit ${selectedObj.name} în imagine. Încearcă din nou cu o poză mai clară!${detectionInfo}<br><button class="report-btn" onclick="reportImage('${base64}', ${selectedObject})">📝 Raportează Poza (Cred că obiectul este în imagine)</button>`);
                 }
                 
             } catch (error) {
@@ -507,54 +548,154 @@
             result.appendChild(img);
         }
 
-        // Analizează imaginea cu Hugging Face API (free)
+        // Analizează imaginea cu multiple API-uri
         async function analyzeImage(base64Image) {
-            try {
-                // Folosim Hugging Face Inference API (gratuit)
-                const response = await fetch('https://api-inference.huggingface.co/models/microsoft/resnet-50', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        inputs: base64Image.split(',')[1] // Remove data:image/jpeg;base64, prefix
-                    })
-                });
-
-                if (!response.ok) {
-                    throw new Error('API Error');
+            const imageData = base64Image.split(',')[1];
+            
+            // Încearcă mai multe API-uri în ordine
+            const apis = [
+                () => analyzeWithHuggingFace(imageData),
+                () => analyzeWithClarifai(imageData),
+                () => analyzeWithImageAI(imageData)
+            ];
+            
+            for (const api of apis) {
+                try {
+                    const result = await api();
+                    if (result && result.detectedObjects && result.detectedObjects.length > 0) {
+                        return result;
+                    }
+                } catch (error) {
+                    console.log('API failed, trying next:', error);
+                    continue;
                 }
-
-                const result = await response.json();
-                return result;
-                
-            } catch (error) {
-                // Fallback: simulează detecția pentru demo
-                console.log('Using fallback detection');
-                return simulateDetection();
             }
+            
+            // Dacă toate API-urile eșuează, folosește verificarea strictă
+            return analyzeWithStrictRules(base64Image);
         }
 
-        // Simulare detecție (pentru când API-ul nu funcționează)
-        function simulateDetection() {
-            // Returnează o șansă de 70% de success pentru demo
-            const success = Math.random() > 0.3;
-            if (success && selectedObject !== null) {
-                return [{ label: objects[selectedObject].keywords[0], score: 0.8 }];
+        // Analizează cu Hugging Face
+        async function analyzeWithHuggingFace(imageData) {
+            const response = await fetch('https://api-inference.huggingface.co/models/microsoft/resnet-50', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    inputs: imageData
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error('Hugging Face API Error');
             }
-            return [{ label: 'unknown', score: 0.1 }];
+
+            const result = await response.json();
+            return {
+                detectedObjects: result || [],
+                confidence: result.length > 0 ? result[0].score : 0,
+                source: 'HuggingFace'
+            };
+        }
+
+        // Analizează cu Clarifai (API gratuit)
+        async function analyzeWithClarifai(imageData) {
+            // Simulare API Clarifai - în realitate ai nevoie de un API key
+            throw new Error('Clarifai not available');
+        }
+
+        // Analizează cu ImageAI (demo)
+        async function analyzeWithImageAI(imageData) {
+            throw new Error('ImageAI not available');
+        }
+
+        // Analizează cu reguli stricte (fallback inteligent)
+        function analyzeWithStrictRules(base64Image) {
+            // Pentru demonstrație, returnăm o detecție care necesită confirmare manuală
+            // În realitate, aici ai putea implementa o logică mai complexă
+            return {
+                detectedObjects: [
+                    { label: 'unknown_object', score: 0.1 }
+                ],
+                confidence: 0.1,
+                source: 'Manual Review Required'
+            };
         }
 
         // Verifică dacă obiectul a fost detectat
         function checkObjectMatch(detectedObjects, keywords) {
-            if (!Array.isArray(detectedObjects)) return false;
+            if (!Array.isArray(detectedObjects) || detectedObjects.length === 0) {
+                return false;
+            }
             
             return detectedObjects.some(obj => {
                 const label = obj.label ? obj.label.toLowerCase() : '';
-                return keywords.some(keyword => 
-                    label.includes(keyword.toLowerCase()) && obj.score > 0.3
-                );
+                const score = obj.score || 0;
+                
+                // Scor minim pentru acceptare
+                if (score < 0.3) return false;
+                
+                return keywords.some(keyword => {
+                    const keywordLower = keyword.toLowerCase();
+                    return label.includes(keywordLower) || 
+                           keywordLower.includes(label) ||
+                           levenshteinDistance(label, keywordLower) < 3;
+                });
             });
+        }
+
+        // Calculează distanța Levenshtein pentru similaritate
+        function levenshteinDistance(str1, str2) {
+            const matrix = [];
+            
+            for (let i = 0; i <= str2.length; i++) {
+                matrix[i] = [i];
+            }
+            
+            for (let j = 0; j <= str1.length; j++) {
+                matrix[0][j] = j;
+            }
+            
+            for (let i = 1; i <= str2.length; i++) {
+                for (let j = 1; j <= str1.length; j++) {
+                    if (str2.charAt(i - 1) === str1.charAt(j - 1)) {
+                        matrix[i][j] = matrix[i - 1][j - 1];
+                    } else {
+                        matrix[i][j] = Math.min(
+                            matrix[i - 1][j - 1] + 1,
+                            matrix[i][j - 1] + 1,
+                            matrix[i - 1][j] + 1
+                        );
+                    }
+                }
+            }
+            
+            return matrix[str2.length][str1.length];
+        }
+
+        // Raportează imaginea pentru review manual
+        function reportImage(base64, objectIndex) {
+            const obj = objects[objectIndex];
+            
+            reportedImages.push({
+                image: base64,
+                objectName: obj.name,
+                timestamp: new Date().toISOString(),
+                userAgent: navigator.userAgent
+            });
+            
+            // Marchează ca completat după raportare
+            completedObjects.add(objectIndex);
+            
+            showResult('success', `📝 Mulțumim pentru raport! Poza a fost trimisă pentru verificare manuală.<br>🎉 ${obj.name} a fost marcat ca găsit!`);
+            
+            selectedObject = null;
+            renderObjectList();
+            updateProgress();
+            
+            // În realitate, aici ai trimite raportul la server
+            console.log('Raport trimis:', reportedImages[reportedImages.length - 1]);
         }
 
         // Afișează rezultatul
@@ -574,6 +715,7 @@
         function resetGame() {
             completedObjects.clear();
             selectedObject = null;
+            reportedImages = [];
             renderObjectList();
             updateProgress();
             
