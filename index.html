@@ -674,9 +674,71 @@
             return matrix[str2.length][str1.length];
         }
 
+        // Funcție pentru convertirea base64 în File object
+        function base64ToFile(base64, filename) {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    
+                    // Setează dimensiunile canvas-ului
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    
+                    // Desenează imaginea pe canvas
+                    ctx.drawImage(img, 0, 0);
+                    
+                    // Convertește canvas-ul în blob JPG cu compresie
+                    canvas.toBlob((blob) => {
+                        const file = new File([blob], filename, {
+                            type: 'image/jpeg',
+                            lastModified: Date.now()
+                        });
+                        resolve(file);
+                    }, 'image/jpeg', 0.8);
+                };
+                img.src = base64;
+            });
+        }
         // Raportează imaginea pentru review manual
-        // Raportează imaginea pentru review manual
-async function reportImage(base64, objectIndex) {
+        async function reportImage(base64, objectIndex) {
+            const obj = objects[objectIndex];
+            
+            try {
+                // Verifică dacă funcția Firebase este disponibilă
+                if (typeof window.reportImageToFirebase !== 'function') {
+                    console.error("Funcția reportImageToFirebase nu este disponibilă încă");
+                    showResult('error', '❌ Firebase nu este încă inițializat. Încearcă din nou în câteva secunde!');
+                    return;
+                }
+                
+                showResult('loading', 'Convertesc imaginea și trimit raportul...');
+                
+                // Convertește base64 în File object
+                const file = await base64ToFile(base64, `${obj.name}_report.jpg`);
+                
+                console.log(`Imaginea convertită: ${Math.round(file.size / 1024)}KB`);
+                
+                // Folosește funcția Firebase
+                const docId = await window.reportImageToFirebase(obj.name, objectIndex, file);
+                
+                console.log("Raport salvat cu ID:", docId);
+                
+                // Marchează ca completat după raportare
+                completedObjects.add(objectIndex);
+                
+                showResult('success', `📝 Mulțumim pentru raport! Poza a fost trimisă pentru verificare manuală.<br>🎉 ${obj.name} a fost marcat ca găsit!`);
+                
+                selectedObject = null;
+                renderObjectList();
+                updateProgress();
+                
+            } catch (error) {
+                console.error("Eroare la salvarea raportului:", error);
+                showResult('error', `❌ A apărut o eroare la trimiterea raportului: ${error.message}<br>Încearcă din nou!`);
+            }
+        }
     const obj = objects[objectIndex];
     
     try {
@@ -707,7 +769,8 @@ async function reportImage(base64, objectIndex) {
         console.error("Eroare la salvarea raportului:", error);
         showResult('error', `❌ A apărut o eroare la trimiterea raportului: ${error.message}<br>Încearcă din nou!`);
     }
-}
+
+    
         // Afișează rezultatul
         function showResult(type, message) {
             const result = document.getElementById('result');
