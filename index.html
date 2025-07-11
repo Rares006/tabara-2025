@@ -715,6 +715,7 @@ function base64ToFile(base64, filename) {
         }
 
         
+
         // Raportează imaginea pentru review manual
         async function reportImage(base64, objectIndex) {
             const obj = objects[objectIndex];
@@ -844,24 +845,37 @@ function base64ToFile(base64, filename) {
 window.uploadImageToFirebase = uploadImageToFirebase;
 
 // Funcție pentru raportarea imaginilor
-        // Funcție pentru raportarea imaginilor
-async function reportImageToFirebase(objectName, objectIndex, base64Image) {
-    try {
-        const docRef = await addDoc(collection(db, "reported-images"), {
-            objectName: objectName,
-            objectIndex: objectIndex,
-            imageUrl: base64Image,
-            timestamp: serverTimestamp(),
-            status: 'pending',
-            userAgent: navigator.userAgent,
-            reportedAt: new Date().toISOString()
-        });
-        return docRef.id;
-    } catch (error) {
-        console.error("Eroare în reportImageToFirebase:", error);
-        throw error;
-    }
-}
+async function reportImageToFirebase(objectName, objectIndex, file) {
+            try {
+                // Încarcă fișierul în Firebase Storage
+                const timestamp = Date.now();
+                const fileName = `reported-images/${objectName}_${timestamp}.jpg`;
+                const storageRef = ref(storage, fileName);
+                
+                const snapshot = await uploadBytes(storageRef, file);
+                const imageUrl = await getDownloadURL(snapshot.ref);
+                
+                // Salvează informațiile în Firestore
+                const docRef = await addDoc(collection(db, "reported-images"), {
+                    objectName: objectName,
+                    objectIndex: objectIndex,
+                    imageUrl: imageUrl,
+                    fileName: fileName,
+                    timestamp: serverTimestamp(),
+                    status: 'pending',
+                    userAgent: navigator.userAgent,
+                    reportedAt: new Date().toISOString()
+                });
+                
+                return {
+                    docId: docRef.id,
+                    imageUrl: imageUrl
+                };
+            } catch (error) {
+                console.error("Eroare în reportImageToFirebase:", error);
+                throw error;
+            }
+        }
 
 // Fă funcția disponibilă global
 window.reportImageToFirebase = reportImageToFirebase;
