@@ -674,24 +674,36 @@
             return matrix[str2.length][str1.length];
         }
 
-        // Funcție pentru convertirea base64 în File object
-        function base64ToFile(base64, filename) {
+// Convertește base64 în fișier JPG
+function base64ToFile(base64, filename) {
             return new Promise((resolve) => {
                 const img = new Image();
                 img.onload = function() {
                     const canvas = document.createElement('canvas');
                     const ctx = canvas.getContext('2d');
                     
-                    // Setează dimensiunile canvas-ului
-                    canvas.width = img.width;
-                    canvas.height = img.height;
+                    // Redimensionează pentru optimizare
+                    let { width, height } = img;
+                    const maxDimension = 1024;
                     
-                    // Desenează imaginea pe canvas
-                    ctx.drawImage(img, 0, 0);
+                    if (width > maxDimension || height > maxDimension) {
+                        const aspectRatio = width / height;
+                        if (width > height) {
+                            width = maxDimension;
+                            height = maxDimension / aspectRatio;
+                        } else {
+                            height = maxDimension;
+                            width = maxDimension * aspectRatio;
+                        }
+                    }
                     
-                    // Convertește canvas-ul în blob JPG cu compresie
+                    canvas.width = width;
+                    canvas.height = height;
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    // Convertește în blob JPG
                     canvas.toBlob((blob) => {
-                        const file = new File([blob], filename, {
+                        const file = new File([blob], filename, { 
                             type: 'image/jpeg',
                             lastModified: Date.now()
                         });
@@ -713,22 +725,24 @@
                     return;
                 }
                 
-                showResult('loading', 'Convertesc imaginea și trimit raportul...');
+                showResult('loading', 'Convertesc și încarcă poza...');
                 
-                // Convertește base64 în File object
-                const file = await base64ToFile(base64, `${obj.name}_report.jpg`);
+                // Convertește base64 în fișier JPG
+                const timestamp = Date.now();
+                const filename = `raport_${obj.name}_${timestamp}.jpg`;
+                const file = await base64ToFile(base64, filename);
                 
-                console.log(`Imaginea convertită: ${Math.round(file.size / 1024)}KB`);
+                console.log(`Fișier creat: ${filename}, mărime: ${Math.round(file.size / 1024)}KB`);
                 
-                // Folosește funcția Firebase
-                const docId = await window.reportImageToFirebase(obj.name, objectIndex, file);
+                // Folosește funcția Firebase pentru a încărca ca fișier
+                const result = await window.reportImageToFirebase(obj.name, objectIndex, file);
                 
-                console.log("Raport salvat cu ID:", docId);
+                console.log("Raport salvat cu ID:", result.docId);
                 
                 // Marchează ca completat după raportare
                 completedObjects.add(objectIndex);
                 
-                showResult('success', `📝 Mulțumim pentru raport! Poza a fost trimisă pentru verificare manuală.<br>🎉 ${obj.name} a fost marcat ca găsit!`);
+                showResult('success', `📝 Mulțumim pentru raport! Poza a fost încărcată pentru verificare manuală.<br>🎉 ${obj.name} a fost marcat ca găsit!<br><small><a href="${result.imageUrl}" target="_blank">Vezi poza</a></small>`);
                 
                 selectedObject = null;
                 renderObjectList();
@@ -739,38 +753,6 @@
                 showResult('error', `❌ A apărut o eroare la trimiterea raportului: ${error.message}<br>Încearcă din nou!`);
             }
         }
-    const obj = objects[objectIndex];
-    
-    try {
-        // Verifică dacă funcția Firebase este disponibilă
-        if (typeof window.reportImageToFirebase !== 'function') {
-            console.error("Funcția reportImageToFirebase nu este disponibilă încă");
-            showResult('error', '❌ Firebase nu este încă inițializat. Încearcă din nou în câteva secunde!');
-            return;
-        }
-        
-        showResult('loading', 'Trimit raportul...');
-        
-        // Folosește funcția Firebase
-        const docId = await window.reportImageToFirebase(obj.name, objectIndex, base64);
-        
-        console.log("Raport salvat cu ID:", docId);
-        
-        // Marchează ca completat după raportare
-        completedObjects.add(objectIndex);
-        
-        showResult('success', `📝 Mulțumim pentru raport! Poza a fost trimisă pentru verificare manuală.<br>🎉 ${obj.name} a fost marcat ca găsit!`);
-        
-        selectedObject = null;
-        renderObjectList();
-        updateProgress();
-        
-    } catch (error) {
-        console.error("Eroare la salvarea raportului:", error);
-        showResult('error', `❌ A apărut o eroare la trimiterea raportului: ${error.message}<br>Încearcă din nou!`);
-    }
-
-    
         // Afișează rezultatul
         function showResult(type, message) {
             const result = document.getElementById('result');
