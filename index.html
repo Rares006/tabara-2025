@@ -482,7 +482,7 @@
                 const isMatch = checkObjectMatch(analysisResult.detectedObjects, selectedObj.keywords);
                 
                 if (isMatch) {
-                    // Încearcă să încarce poza în Firebase
+                    // Încarcă poza în Firebase
                     showResult('loading', 'Salvez poza în cloud...');
                     
                     try {
@@ -552,80 +552,84 @@
         async function analyzeImage(base64Image) {
             const imageData = base64Image.split(',')[1];
             
-            // Încearcă cu API-ul MobileNet de la TensorFlow.js
-            try {
-                const result = await analyzeWithTensorFlow(base64Image);
-                if (result && result.detectedObjects && result.detectedObjects.length > 0) {
-                    return result;
-                }
-            } catch (error) {
-                console.log('TensorFlow failed, trying fallback:', error);
-            }
-            
-            // Fallback: folosește verificarea prin cuvinte cheie în numele fișierului
-            return analyzeWithImageAnalysis(base64Image);
-        }
-
-        // Analizează cu TensorFlow.js (simulat - pentru demonstrație)
-        async function analyzeWithTensorFlow(base64Image) {
-            // Simulare AI - în realitate ai putea folosi TensorFlow.js
-            // Pentru demonstrație, returnăm obiecte comune detectate
-            const commonObjects = [
-                { label: 'cup', score: 0.85 },
-                { label: 'phone', score: 0.78 },
-                { label: 'book', score: 0.65 },
-                { label: 'glasses', score: 0.72 },
-                { label: 'watch', score: 0.58 },
-                { label: 'pen', score: 0.81 },
-                { label: 'plant', score: 0.67 },
-                { label: 'key', score: 0.54 },
-                { label: 'battery', score: 0.63 },
-                { label: 'coin', score: 0.45 }
+            // Încearcă mai multe API-uri în ordine
+            const apis = [
+                () => analyzeWithHuggingFace(imageData),
+                () => analyzeWithClarifai(imageData),
+                () => analyzeWithImageAI(imageData)
             ];
             
-            // Returnează aleatoriu 1-3 obiecte pentru simulare
-            const numObjects = Math.floor(Math.random() * 3) + 1;
-            const shuffled = commonObjects.sort(() => 0.5 - Math.random());
-            const selected = shuffled.slice(0, numObjects);
+            for (const api of apis) {
+                try {
+                    const result = await api();
+                    if (result && result.detectedObjects && result.detectedObjects.length > 0) {
+                        return result;
+                    }
+                } catch (error) {
+                    console.log('API failed, trying next:', error);
+                    continue;
+                }
+            }
             
+            // Dacă toate API-urile eșuează, folosește verificarea strictă
+            return analyzeWithStrictRules(base64Image);
+        }
+
+        // Analizează cu Hugging Face
+        async function analyzeWithHuggingFace(imageData) {
+            const response = await fetch('https://api-inference.huggingface.co/models/microsoft/resnet-50', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    inputs: imageData
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error('Hugging Face API Error');
+            }
+
+            const result = await response.json();
             return {
-                detectedObjects: selected,
-                confidence: Math.random() * 0.5 + 0.5, // 50-100%
-                source: 'TensorFlow.js'
+                detectedObjects: result || [],
+                confidence: result.length > 0 ? result[0].score : 0,
+                source: 'HuggingFace'
             };
         }
 
-        // Analizează prin logică simplă
-        function analyzeWithImageAnalysis(base64Image) {
-            // Pentru demonstrație, simulăm o detecție bazată pe timp
-            const hour = new Date().getHours();
-            const randomFactor = Math.random();
-            
-            let detectedObjects = [];
-            
-            // Simulăm detecții bazate pe probabilități
-            if (randomFactor > 0.3) {
-                detectedObjects.push({
-                    label: 'object',
-                    score: randomFactor
-                });
-            }
-            
+        // Analizează cu Clarifai (API gratuit)
+        async function analyzeWithClarifai(imageData) {
+            // Simulare API Clarifai - în realitate ai nevoie de un API key
+            throw new Error('Clarifai not available');
+        }
+
+        // Analizează cu ImageAI (demo)
+        async function analyzeWithImageAI(imageData) {
+            throw new Error('ImageAI not available');
+        }
+
+        // Analizează cu reguli stricte (fallback inteligent)
+        function analyzeWithStrictRules(base64Image) {
+            // Pentru demonstrație, returnăm o detecție care necesită confirmare manuală
+            // În realitate, aici ai putea implementa o logică mai complexă
             return {
-                detectedObjects: detectedObjects,
-                confidence: randomFactor,
-                source: 'Image Analysis'
+                detectedObjects: [
+                    { label: 'unknown_object', score: 0.1 }
+                ],
+                confidence: 0.1,
+                source: 'Manual Review Required'
             };
         }
 
         // Verifică dacă obiectul a fost detectat
         function checkObjectMatch(detectedObjects, keywords) {
             if (!Array.isArray(detectedObjects) || detectedObjects.length === 0) {
-                // Pentru o experiență mai bună, acceptăm uneori chiar și fără detecții
-                return Math.random() > 0.7; // 30% șansă să fie acceptat
+                return false;
             }
             
-            const hasMatch = detectedObjects.some(obj => {
+            return detectedObjects.some(obj => {
                 const label = obj.label ? obj.label.toLowerCase() : '';
                 const score = obj.score || 0;
                 
@@ -639,13 +643,6 @@
                            levenshteinDistance(label, keywordLower) < 3;
                 });
             });
-            
-            // Dacă nu găsim match exact, dăm o șansă aleatorie
-            if (!hasMatch) {
-                return Math.random() > 0.6; // 40% șansă să fie acceptat
-            }
-            
-            return hasMatch;
         }
 
         // Calculează distanța Levenshtein pentru similaritate
@@ -677,8 +674,8 @@
             return matrix[str2.length][str1.length];
         }
 
-        // Convertește base64 în fișier JPG
-        function base64ToFile(base64, filename) {
+// Convertește base64 în fișier JPG
+function base64ToFile(base64, filename) {
             return new Promise((resolve) => {
                 const img = new Image();
                 img.onload = function() {
@@ -717,6 +714,7 @@
             });
         }
 
+        
         // Raportează imaginea pentru review manual
         async function reportImage(base64, objectIndex) {
             const obj = objects[objectIndex];
@@ -724,13 +722,8 @@
             try {
                 // Verifică dacă funcția Firebase este disponibilă
                 if (typeof window.reportImageToFirebase !== 'function') {
-                    console.log("Firebase nu este disponibil, marchează ca completat");
-                    // Marchează ca completat chiar dacă Firebase nu funcționează
-                    completedObjects.add(objectIndex);
-                    showResult('success', `📝 Mulțumim pentru raport! ${obj.name} a fost marcat ca găsit!`);
-                    selectedObject = null;
-                    renderObjectList();
-                    updateProgress();
+                    console.error("Funcția reportImageToFirebase nu este disponibilă încă");
+                    showResult('error', '❌ Firebase nu este încă inițializat. Încearcă din nou în câteva secunde!');
                     return;
                 }
                 
@@ -746,12 +739,12 @@
                 // Folosește funcția Firebase pentru a încărca ca fișier
                 const result = await window.reportImageToFirebase(obj.name, objectIndex, file);
                 
-                console.log("Raport salvat cu succes");
+                console.log("Raport salvat cu ID:", result.docId);
                 
                 // Marchează ca completat după raportare
                 completedObjects.add(objectIndex);
                 
-                showResult('success', `📝 Mulțumim pentru raport! Poza a fost încărcată pentru verificare manuală.<br>🎉 ${obj.name} a fost marcat ca găsit!`);
+                showResult('success', `📝 Mulțumim pentru raport! Poza a fost încărcată pentru verificare manuală.<br>🎉 ${obj.name} a fost marcat ca găsit!<br><small><a href="${result.imageUrl}" target="_blank">Vezi poza</a></small>`);
                 
                 selectedObject = null;
                 renderObjectList();
@@ -759,14 +752,7 @@
                 
             } catch (error) {
                 console.error("Eroare la salvarea raportului:", error);
-                
-                // Marchează ca completat chiar dacă raportarea a eșuat
-                completedObjects.add(objectIndex);
-                showResult('success', `📝 Mulțumim pentru raport! ${obj.name} a fost marcat ca găsit!<br><small>Nota: Raportul nu a putut fi salvat în cloud, dar progresul a fost salvat local.</small>`);
-                
-                selectedObject = null;
-                renderObjectList();
-                updateProgress();
+                showResult('error', `❌ A apărut o eroare la trimiterea raportului: ${error.message}<br>Încearcă din nou!`);
             }
         }
         // Afișează rezultatul
