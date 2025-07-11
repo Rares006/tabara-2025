@@ -713,46 +713,48 @@ function base64ToFile(base64, filename) {
                 img.src = base64;
             });
         }
-        // Raportează imaginea pentru review manual
-        async function reportImage(base64, objectIndex) {
-            const obj = objects[objectIndex];
-            
-            try {
-                // Verifică dacă funcția Firebase este disponibilă
-                if (typeof window.reportImageToFirebase !== 'function') {
-                    console.error("Funcția reportImageToFirebase nu este disponibilă încă");
-                    showResult('error', '❌ Firebase nu este încă inițializat. Încearcă din nou în câteva secunde!');
-                    return;
-                }
-                
-                showResult('loading', 'Convertesc și încarcă poza...');
-                
-                // Convertește base64 în fișier JPG
-                const timestamp = Date.now();
-                const filename = `raport_${obj.name}_${timestamp}.jpg`;
-                const file = await base64ToFile(base64, filename);
-                
-                console.log(`Fișier creat: ${filename}, mărime: ${Math.round(file.size / 1024)}KB`);
-                
-                // Folosește funcția Firebase pentru a încărca ca fișier
-                const result = await window.reportImageToFirebase(obj.name, objectIndex, file);
-                
-                console.log("Raport salvat cu ID:", result.docId);
-                
-                // Marchează ca completat după raportare
-                completedObjects.add(objectIndex);
-                
-                showResult('success', `📝 Mulțumim pentru raport! Poza a fost încărcată pentru verificare manuală.<br>🎉 ${obj.name} a fost marcat ca găsit!<br><small><a href="${result.imageUrl}" target="_blank">Vezi poza</a></small>`);
-                
-                selectedObject = null;
-                renderObjectList();
-                updateProgress();
-                
-            } catch (error) {
-                console.error("Eroare la salvarea raportului:", error);
-                showResult('error', `❌ A apărut o eroare la trimiterea raportului: ${error.message}<br>Încearcă din nou!`);
-            }
-        }
+       // Funcție pentru raportarea imaginilor
+async function reportImageToFirebase(objectName, objectIndex, file) {
+    try {
+        // Creează un nume unic pentru fișier
+        const timestamp = Date.now();
+        const fileName = `rapoarte/${objectName}_${timestamp}.jpg`;
+        
+        // Creează referința în Storage
+        const storageRef = ref(storage, fileName);
+        
+        // Încarcă fișierul în Storage
+        console.log("Încarcă fișierul în Storage...");
+        const snapshot = await uploadBytes(storageRef, file);
+        
+        // Obține URL-ul de download
+        console.log("Obține URL-ul de download...");
+        const downloadURL = await getDownloadURL(snapshot.ref);
+        
+        // Salvează informațiile în Firestore
+        console.log("Salvează în Firestore...");
+        const docRef = await addDoc(collection(db, "reported-images"), {
+            objectName: objectName,
+            objectIndex: objectIndex,
+            imageUrl: downloadURL,
+            fileName: fileName,
+            timestamp: serverTimestamp(),
+            status: 'pending',
+            userAgent: navigator.userAgent,
+            reportedAt: new Date().toISOString()
+        });
+        
+        console.log("Raport salvat cu ID:", docRef.id);
+        return {
+            docId: docRef.id,
+            imageUrl: downloadURL
+        };
+        
+    } catch (error) {
+        console.error("Eroare în reportImageToFirebase:", error);
+        throw error;
+    }
+}
         // Afișează rezultatul
         function showResult(type, message) {
             const result = document.getElementById('result');
