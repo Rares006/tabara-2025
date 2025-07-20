@@ -46,6 +46,98 @@
             font-size: 1.1em;
         }
 
+        /* Login Screen Styles */
+        .login-screen {
+            text-align: center;
+            padding: 50px 20px;
+        }
+
+        .login-screen h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 2em;
+        }
+
+        .login-screen p {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        .name-input {
+            width: 100%;
+            max-width: 300px;
+            padding: 15px 20px;
+            border: 3px solid #ddd;
+            border-radius: 50px;
+            font-size: 1.1em;
+            text-align: center;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+            outline: none;
+        }
+
+        .name-input:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 5px rgba(102, 126, 234, 0.1);
+        }
+
+        .login-btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 15px 40px;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.2em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .login-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .login-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /* User Info Section */
+        .user-info {
+            background: linear-gradient(135deg, #e8f5e8, #f0f8f0);
+            border-radius: 15px;
+            padding: 15px 20px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 2px solid #4CAF50;
+        }
+
+        .user-name {
+            font-weight: bold;
+            color: #2e7d32;
+            font-size: 1.1em;
+        }
+
+        .logout-btn {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.3s ease;
+        }
+
+        .logout-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 3px 10px rgba(255, 107, 107, 0.3);
+        }
+
         .progress-bar {
             width: 100%;
             height: 20px;
@@ -327,6 +419,10 @@
             border-radius: 8px;
         }
 
+        .hidden {
+            display: none !important;
+        }
+
         @media (max-width: 600px) {
             .container {
                 padding: 20px;
@@ -340,43 +436,74 @@
             h1 {
                 font-size: 2em;
             }
+
+            .user-info {
+                flex-direction: column;
+                gap: 10px;
+                text-align: center;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🔍 Vânătoarea de Obiecte</h1>
-        <p class="subtitle">Găsește și fotografiază toate obiectele de pe listă!</p>
-        
-        <div class="progress-bar">
-            <div class="progress-fill" id="progressFill"></div>
-            <div class="progress-text" id="progressText">0 / 10 completate</div>
+        <!-- Login Screen -->
+        <div id="loginScreen" class="login-screen">
+            <h1>🔍 Vânătoarea de Obiecte</h1>
+            <h2>👋 Bun venit!</h2>
+            <p>Introdu numele tău pentru a începe aventura:</p>
+            
+            <div>
+                <input type="text" id="nameInput" class="name-input" placeholder="Numele tău..." maxlength="30">
+                <br>
+                <button id="loginBtn" class="login-btn" onclick="handleLogin()">🚀 Începe Jocul</button>
+            </div>
         </div>
 
-        <div class="object-list" id="objectList"></div>
+        <!-- Game Screen -->
+        <div id="gameScreen" class="hidden">
+            <h1>🔍 Vânătoarea de Obiecte</h1>
+            <p class="subtitle">Găsește și fotografiază toate obiectele de pe listă!</p>
+            
+            <!-- User Info -->
+            <div class="user-info">
+                <div>
+                    <span>👤 Jucător: </span>
+                    <span class="user-name" id="currentUserName"></span>
+                </div>
+                <button class="logout-btn" onclick="handleLogout()">🚪 Ieși</button>
+            </div>
+            
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+                <div class="progress-text" id="progressText">0 / 10 completate</div>
+            </div>
 
-        <div class="upload-section">
-            <h3>📸 Încarcă o poză cu obiectul</h3>
-            <p>Selectează un obiect de mai sus, apoi fă o poză sau încarcă una existentă</p>
-            
-            <input type="file" id="fileInput" class="file-input" accept="image/*">
-            <input type="file" id="cameraInput" class="file-input" accept="image/*" capture="environment">
-            
-            <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
-                📁 Alege din Galerie
-            </button>
-            <button class="upload-btn camera-btn" onclick="document.getElementById('cameraInput').click()">
-                📷 Fă o Poză
-            </button>
-            
-            <div class="result" id="result"></div>
-        </div>
+            <div class="object-list" id="objectList"></div>
 
-        <div class="completion-celebration" id="celebration">
-            <div class="celebration-emoji">🎉🏆🎊</div>
-            <h2>Felicitări!</h2>
-            <p>Ai găsit toate obiectele! Ești un adevărat detectiv!</p>
-            <button class="reset-btn" onclick="resetGame()">🔄 Joacă din nou</button>
+            <div class="upload-section">
+                <h3>📸 Încarcă o poză cu obiectul</h3>
+                <p>Selectează un obiect de mai sus, apoi fă o poză sau încarcă una existentă</p>
+                
+                <input type="file" id="fileInput" class="file-input" accept="image/*">
+                <input type="file" id="cameraInput" class="file-input" accept="image/*" capture="environment">
+                
+                <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
+                    📁 Alege din Galerie
+                </button>
+                <button class="upload-btn camera-btn" onclick="document.getElementById('cameraInput').click()">
+                    📷 Fă o Poză
+                </button>
+                
+                <div class="result" id="result"></div>
+            </div>
+
+            <div class="completion-celebration" id="celebration">
+                <div class="celebration-emoji">🎉🏆🎊</div>
+                <h2>Felicitări!</h2>
+                <p>Ai găsit toate obiectele! Ești un adevărat detectiv!</p>
+                <button class="reset-btn" onclick="resetGame()">🔄 Joacă din nou</button>
+            </div>
         </div>
     </div>
 
@@ -395,17 +522,226 @@
             { name: "Monedă", emoji: "🪙", keywords: ["coin", "money", "currency", "change", "penny", "quarter"] }
         ];
 
+        let currentUser = null;
         let completedObjects = new Set();
         let selectedObject = null;
         let reportedImages = [];
 
         // Inițializare
         function init() {
-            renderObjectList();
-            updateProgress();
+            checkExistingUser();
+            
+            // Event listeners pentru login
+            document.getElementById('nameInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    handleLogin();
+                }
+            });
             
             document.getElementById('fileInput').addEventListener('change', handleImageUpload);
             document.getElementById('cameraInput').addEventListener('change', handleImageUpload);
+        }
+
+        // Verifică dacă există un utilizator salvat
+        async function checkExistingUser() {
+            const savedUser = localStorage.getItem('vanatorea_user');
+            if (savedUser) {
+                currentUser = savedUser;
+                await loadUserProgress();
+                showGameScreen();
+            } else {
+                showLoginScreen();
+            }
+        }
+
+        // Afișează ecranul de login
+        function showLoginScreen() {
+            document.getElementById('loginScreen').classList.remove('hidden');
+            document.getElementById('gameScreen').classList.add('hidden');
+            document.getElementById('nameInput').focus();
+        }
+
+        // Afișează ecranul de joc
+        function showGameScreen() {
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('gameScreen').classList.remove('hidden');
+            document.getElementById('currentUserName').textContent = currentUser;
+            renderObjectList();
+            updateProgress();
+        }
+
+        // Gestionează login-ul
+        async function handleLogin() {
+            const nameInput = document.getElementById('nameInput');
+            const loginBtn = document.getElementById('loginBtn');
+            const name = nameInput.value.trim();
+            
+            if (name.length < 2) {
+                nameInput.style.borderColor = '#dc3545';
+                nameInput.placeholder = 'Numele trebuie să aibă minim 2 caractere!';
+                setTimeout(() => {
+                    nameInput.style.borderColor = '#ddd';
+                    nameInput.placeholder = 'Numele tău...';
+                }, 3000);
+                return;
+            }
+
+            // Dezactivează butonul în timpul încărcării
+            loginBtn.disabled = true;
+            loginBtn.textContent = '🔄 Se încarcă...';
+
+            try {
+                // Salvează utilizatorul
+                currentUser = name;
+                localStorage.setItem('vanatorea_user', currentUser);
+                
+                // Încarcă progresul utilizatorului din Firebase
+                await loadUserProgress();
+                
+                // Afișează ecranul de joc
+                showGameScreen();
+                
+            } catch (error) {
+                console.error('Eroare la login:', error);
+                alert('A apărut o eroare la încărcarea progresului. Încearcă din nou!');
+            } finally {
+                // Reactivează butonul
+                loginBtn.disabled = false;
+                loginBtn.textContent = '🚀 Începe Jocul';
+            }
+        }
+
+        // Gestionează logout-ul
+        async function handleLogout() {
+            if (confirm('Ești sigur că vrei să ieși? Progresul va fi salvat.')) {
+                try {
+                    await saveUserProgress();
+                } catch (error) {
+                    console.error('Eroare la salvarea progresului:', error);
+                }
+                
+                localStorage.removeItem('vanatorea_user');
+                currentUser = null;
+                completedObjects.clear();
+                selectedObject = null;
+                document.getElementById('nameInput').value = '';
+                showLoginScreen();
+            }
+        }
+
+        // Încarcă progresul utilizatorului din Firebase
+        async function loadUserProgress() {
+            if (!currentUser) return;
+            
+            try {
+                // Încearcă să încarce din Firebase
+                showLoadingProgress('Se încarcă progresul...');
+                const firebaseProgress = await window.loadUserProgressFromFirebase(currentUser);
+                
+                if (firebaseProgress && firebaseProgress.completedObjects) {
+                    completedObjects = new Set(firebaseProgress.completedObjects);
+                    console.log(`Progres încărcat din Firebase pentru ${currentUser}:`, firebaseProgress.completedObjects);
+                } else {
+                    // Dacă nu există în Firebase, încearcă local ca backup
+                    const progressKey = `vanatorea_progress_${currentUser}`;
+                    const savedProgress = localStorage.getItem(progressKey);
+                    
+                    if (savedProgress) {
+                        try {
+                            const progress = JSON.parse(savedProgress);
+                            completedObjects = new Set(progress.completedObjects || []);
+                            console.log(`Progres încărcat din localStorage pentru ${currentUser}`);
+                            
+                            // Sincronizează cu Firebase
+                            await saveUserProgress();
+                        } catch (error) {
+                            console.error('Eroare la încărcarea progresului local:', error);
+                            completedObjects = new Set();
+                        }
+                    } else {
+                        completedObjects = new Set();
+                        console.log(`Progres nou pentru ${currentUser}`);
+                    }
+                }
+                
+                hideLoadingProgress();
+                
+            } catch (error) {
+                console.error('Eroare la încărcarea progresului din Firebase:', error);
+                hideLoadingProgress();
+                
+                // Fallback la localStorage
+                const progressKey = `vanatorea_progress_${currentUser}`;
+                const savedProgress = localStorage.getItem(progressKey);
+                
+                if (savedProgress) {
+                    try {
+                        const progress = JSON.parse(savedProgress);
+                        completedObjects = new Set(progress.completedObjects || []);
+                    } catch (error) {
+                        completedObjects = new Set();
+                    }
+                } else {
+                    completedObjects = new Set();
+                }
+            }
+        }
+
+        // Salvează progresul utilizatorului în Firebase și local
+        async function saveUserProgress() {
+            if (!currentUser) return;
+            
+            const progress = {
+                completedObjects: Array.from(completedObjects),
+                lastUpdated: Date.now(),
+                totalObjects: objects.length,
+                completionPercentage: Math.round((completedObjects.size / objects.length) * 100)
+            };
+            
+            try {
+                // Salvează în Firebase
+                await window.saveUserProgressToFirebase(currentUser, progress);
+                console.log(`Progres salvat în Firebase pentru ${currentUser}`);
+                
+                // Salvează și local ca backup
+                const progressKey = `vanatorea_progress_${currentUser}`;
+                localStorage.setItem(progressKey, JSON.stringify(progress));
+                
+            } catch (error) {
+                console.error('Eroare la salvarea progresului în Firebase:', error);
+                
+                // Salvează măcar local
+                const progressKey = `vanatorea_progress_${currentUser}`;
+                localStorage.setItem(progressKey, JSON.stringify(progress));
+            }
+        }
+
+        // Afișează loading pentru progres
+        function showLoadingProgress(message) {
+            const gameScreen = document.getElementById('gameScreen');
+            if (gameScreen && !gameScreen.classList.contains('hidden')) {
+                const progressBar = document.querySelector('.progress-bar');
+                if (progressBar) {
+                    progressBar.style.opacity = '0.5';
+                    const loadingDiv = document.createElement('div');
+                    loadingDiv.id = 'progressLoading';
+                    loadingDiv.style.cssText = 'text-align: center; color: #666; font-size: 0.9em; margin-bottom: 10px;';
+                    loadingDiv.innerHTML = `<div style="display: inline-block; width: 16px; height: 16px; border: 2px solid #ddd; border-top: 2px solid #667eea; border-radius: 50%; animation: spin 1s linear infinite; margin-right: 8px;"></div>${message}`;
+                    progressBar.parentNode.insertBefore(loadingDiv, progressBar);
+                }
+            }
+        }
+
+        // Ascunde loading pentru progres
+        function hideLoadingProgress() {
+            const loadingDiv = document.getElementById('progressLoading');
+            if (loadingDiv) {
+                loadingDiv.remove();
+            }
+            const progressBar = document.querySelector('.progress-bar');
+            if (progressBar) {
+                progressBar.style.opacity = '1';
+            }
         }
 
         // Randează lista de obiecte
@@ -453,6 +789,9 @@
                     document.getElementById('celebration').style.display = 'block';
                 }, 500);
             }
+            
+            // Salvează progresul automat
+            saveUserProgress();
         }
 
         // Procesează imaginea încărcată
@@ -486,7 +825,7 @@
                     showResult('loading', 'Salvez poza în cloud...');
                     
                     try {
-                        const imageUrl = await window.uploadImageToFirebase(file, selectedObj.name);
+                        const imageUrl = await window.uploadImageToFirebase(file, selectedObj.name, currentUser);
                         
                         completedObjects.add(selectedObject);
                         showResult('success', `🎉 Excelent! Ai găsit ${selectedObj.name}!<br>📸 Poza a fost salvată în cloud!<br><div class="confidence-score">Încredere: ${Math.round(analysisResult.confidence * 100)}%</div><br><small>URL: <a href="${imageUrl}" target="_blank">Vezi poza</a></small>`);
@@ -674,8 +1013,8 @@
             return matrix[str2.length][str1.length];
         }
 
-// Convertește base64 în fișier JPG
-function base64ToFile(base64, filename) {
+        // Convertește base64 în fișier JPG
+        function base64ToFile(base64, filename) {
             return new Promise((resolve) => {
                 const img = new Image();
                 img.onload = function() {
@@ -714,8 +1053,6 @@ function base64ToFile(base64, filename) {
             });
         }
 
-        
-
         // Raportează imaginea pentru review manual
         async function reportImage(base64, objectIndex) {
             const obj = objects[objectIndex];
@@ -738,7 +1075,7 @@ function base64ToFile(base64, filename) {
                 console.log(`Fișier creat: ${filename}, mărime: ${Math.round(file.size / 1024)}KB`);
                 
                 // Folosește funcția Firebase pentru a încărca ca fișier
-                const result = await window.reportImageToFirebase(obj.name, objectIndex, file);
+                const result = await window.reportImageToFirebase(obj.name, objectIndex, file, currentUser);
                 
                 console.log("Raport salvat cu ID:", result.docId);
                 
@@ -756,6 +1093,7 @@ function base64ToFile(base64, filename) {
                 showResult('error', `❌ A apărut o eroare la trimiterea raportului: ${error.message}<br>Încearcă din nou!`);
             }
         }
+
         // Afișează rezultatul
         function showResult(type, message) {
             const result = document.getElementById('result');
@@ -770,15 +1108,24 @@ function base64ToFile(base64, filename) {
         }
 
         // Resetează jocul
-        function resetGame() {
-            completedObjects.clear();
-            selectedObject = null;
-            reportedImages = [];
-            renderObjectList();
-            updateProgress();
-            
-            document.getElementById('result').style.display = 'none';
-            document.getElementById('celebration').style.display = 'none';
+        async function resetGame() {
+            if (confirm('Ești sigur că vrei să resetezi progresul? Toate obiectele găsite vor fi șterse!')) {
+                completedObjects.clear();
+                selectedObject = null;
+                reportedImages = [];
+                
+                try {
+                    await saveUserProgress(); // Salvează progresul resetat în Firebase
+                } catch (error) {
+                    console.error('Eroare la salvarea progresului resetat:', error);
+                }
+                
+                renderObjectList();
+                updateProgress();
+                
+                document.getElementById('result').style.display = 'none';
+                document.getElementById('celebration').style.display = 'none';
+            }
         }
 
         // Inițializează aplicația
@@ -789,7 +1136,7 @@ function base64ToFile(base64, filename) {
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
         import { getStorage, ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js';
-        import { getFirestore, collection, addDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+        import { getFirestore, collection, addDoc, serverTimestamp, query, where, orderBy, limit, getDocs } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
         // Configurația Firebase
         const firebaseConfig = {
@@ -806,12 +1153,13 @@ function base64ToFile(base64, filename) {
         const storage = getStorage(app);
         const db = getFirestore(app);
 
-        // Funcție pentru încărcarea pozei în Firebase Storage
-        async function uploadImageToFirebase(file, objectName) {
+        // Funcție pentru încărcarea pozei în Firebase Storage cu numele utilizatorului
+        async function uploadImageToFirebase(file, objectName, userName) {
             try {
                 // Creează un nume unic pentru fișier
                 const timestamp = Date.now();
-                const fileName = `vanatorade-obiecte/${objectName}_${timestamp}.jpg`;
+                const safeUserName = userName.replace(/[^a-zA-Z0-9]/g, '_');
+                const fileName = `vanatorade-obiecte/${safeUserName}/${objectName}_${timestamp}.jpg`;
                 
                 // Creează referința în Storage
                 const storageRef = ref(storage, fileName);
@@ -824,12 +1172,18 @@ function base64ToFile(base64, filename) {
                 
                 // Salvează informațiile în Firestore
                 const docRef = await addDoc(collection(db, "discovered-objects"), {
+                    userName: userName,
                     objectName: objectName,
                     imageUrl: downloadURL,
                     fileName: fileName,
                     timestamp: serverTimestamp(),
                     userAgent: navigator.userAgent,
-                    uploadedAt: new Date().toISOString()
+                    uploadedAt: new Date().toISOString(),
+                    deviceInfo: {
+                        platform: navigator.platform,
+                        language: navigator.language,
+                        screenResolution: `${screen.width}x${screen.height}`
+                    }
                 });
                 
                 console.log("Poza încărcată cu succes! Document ID:", docRef.id);
@@ -842,14 +1196,15 @@ function base64ToFile(base64, filename) {
         }
 
         // Fă funcția disponibilă global
-window.uploadImageToFirebase = uploadImageToFirebase;
+        window.uploadImageToFirebase = uploadImageToFirebase;
 
-// Funcție pentru raportarea imaginilor
-async function reportImageToFirebase(objectName, objectIndex, file) {
+        // Funcție pentru raportarea imaginilor cu numele utilizatorului
+        async function reportImageToFirebase(objectName, objectIndex, file, userName) {
             try {
                 // Încarcă fișierul în Firebase Storage
                 const timestamp = Date.now();
-                const fileName = `reported-images/${objectName}_${timestamp}.jpg`;
+                const safeUserName = userName.replace(/[^a-zA-Z0-9]/g, '_');
+                const fileName = `reported-images/${safeUserName}/${objectName}_${timestamp}.jpg`;
                 const storageRef = ref(storage, fileName);
                 
                 const snapshot = await uploadBytes(storageRef, file);
@@ -857,6 +1212,7 @@ async function reportImageToFirebase(objectName, objectIndex, file) {
                 
                 // Salvează informațiile în Firestore
                 const docRef = await addDoc(collection(db, "reported-images"), {
+                    userName: userName,
                     objectName: objectName,
                     objectIndex: objectIndex,
                     imageUrl: imageUrl,
@@ -864,7 +1220,12 @@ async function reportImageToFirebase(objectName, objectIndex, file) {
                     timestamp: serverTimestamp(),
                     status: 'pending',
                     userAgent: navigator.userAgent,
-                    reportedAt: new Date().toISOString()
+                    reportedAt: new Date().toISOString(),
+                    deviceInfo: {
+                        platform: navigator.platform,
+                        language: navigator.language,
+                        screenResolution: `${screen.width}x${screen.height}`
+                    }
                 });
                 
                 return {
@@ -877,8 +1238,75 @@ async function reportImageToFirebase(objectName, objectIndex, file) {
             }
         }
 
-// Fă funcția disponibilă global
-window.reportImageToFirebase = reportImageToFirebase;
+        // Fă funcția disponibilă global
+        window.reportImageToFirebase = reportImageToFirebase;
+
+        // Funcție pentru salvarea progresului utilizatorului în Firebase
+        async function saveUserProgressToFirebase(userName, progressData) {
+            try {
+                const safeUserName = userName.replace(/[^a-zA-Z0-9]/g, '_');
+                
+                // Salvează în Firestore
+                const docRef = await addDoc(collection(db, "user-progress"), {
+                    userName: userName,
+                    safeUserName: safeUserName,
+                    completedObjects: progressData.completedObjects,
+                    totalObjects: progressData.totalObjects,
+                    completionPercentage: progressData.completionPercentage,
+                    lastUpdated: serverTimestamp(),
+                    timestamp: new Date().toISOString(),
+                    deviceInfo: {
+                        platform: navigator.platform,
+                        language: navigator.language,
+                        userAgent: navigator.userAgent,
+                        screenResolution: `${screen.width}x${screen.height}`
+                    }
+                });
+                
+                return docRef.id;
+            } catch (error) {
+                console.error("Eroare la salvarea progresului în Firebase:", error);
+                throw error;
+            }
+        }
+
+        // Funcție pentru încărcarea progresului utilizatorului din Firebase
+        async function loadUserProgressFromFirebase(userName) {
+            try {
+                // Caută cel mai recent progres pentru utilizator
+                const q = query(
+                    collection(db, "user-progress"),
+                    where("userName", "==", userName),
+                    orderBy("lastUpdated", "desc"),
+                    limit(1)
+                );
+                
+                const querySnapshot = await getDocs(q);
+                
+                if (!querySnapshot.empty) {
+                    const doc = querySnapshot.docs[0];
+                    const data = doc.data();
+                    
+                    return {
+                        completedObjects: data.completedObjects || [],
+                        totalObjects: data.totalObjects || 0,
+                        completionPercentage: data.completionPercentage || 0,
+                        lastUpdated: data.lastUpdated,
+                        docId: doc.id
+                    };
+                } else {
+                    return null; // Nu există progres salvat
+                }
+                
+            } catch (error) {
+                console.error("Eroare la încărcarea progresului din Firebase:", error);
+                throw error;
+            }
+        }
+
+        // Fă funcțiile disponibile global
+        window.saveUserProgressToFirebase = saveUserProgressToFirebase;
+        window.loadUserProgressFromFirebase = loadUserProgressFromFirebase;
     </script>
 </body>
 </html>
