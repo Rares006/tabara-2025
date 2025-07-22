@@ -423,6 +423,29 @@
             display: none !important;
         }
 
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.3);
+            z-index: 1000;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification.error {
+            background: linear-gradient(135deg, #f44336, #d32f2f);
+            box-shadow: 0 5px 15px rgba(244, 67, 54, 0.3);
+        }
+
         @media (max-width: 600px) {
             .container {
                 padding: 20px;
@@ -441,6 +464,16 @@
                 flex-direction: column;
                 gap: 10px;
                 text-align: center;
+            }
+
+            .notification {
+                right: 10px;
+                left: 10px;
+                transform: translateY(-100px);
+            }
+
+            .notification.show {
+                transform: translateY(0);
             }
         }
     </style>
@@ -507,9 +540,257 @@
         </div>
     </div>
 
+     <!-- Firebase SDK -->
+     <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getStorage, ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js';
+        import { getFirestore, collection, addDoc, serverTimestamp, query, where, orderBy, limit, getDocs, onSnapshot, doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        // Configurația Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyAA1ytLJrwh7JHSOwGQrf2t_5imgtiWLk4",
+            authDomain: "tabara-2025-95ff5.firebaseapp.com",
+            projectId: "tabara-2025-95ff5",
+            storageBucket: "tabara-2025-95ff5.firebasestorage.app",
+            messagingSenderId: "552618851743",
+            appId: "1:552618851743:web:tabara2025app"
+        };
+
+        // Inițializează Firebase
+        const app = initializeApp(firebaseConfig);
+        const storage = getStorage(app);
+        const db = getFirestore(app);
+
+        // Funcție pentru încărcarea pozei în Firebase Storage cu numele utilizatorului
+        async function uploadImageToFirebase(file, objectName, userName) {
+            try {
+                // Creează un nume unic pentru fișier
+                const timestamp = Date.now();
+                const safeUserName = userName.replace(/[^a-zA-Z0-9]/g, '_');
+                const fileName = `vanatorade-obiecte/${safeUserName}/${objectName}_${timestamp}.jpg`;
+                
+                // Creează referința în Storage
+                const storageRef = ref(storage, fileName);
+                
+                // Încarcă fișierul
+                const snapshot = await uploadBytes(storageRef, file);
+                
+                // Obține URL-ul de download
+                const downloadURL = await getDownloadURL(snapshot.ref);
+                
+                // Salvează informațiile în Firestore
+                const docRef = await addDoc(collection(db, "discovered-objects"), {
+                    userName: userName,
+                    objectName: objectName,
+                    imageUrl: downloadURL,
+                    fileName: fileName,
+                    timestamp: serverTimestamp(),
+                    userAgent: navigator.userAgent,
+                    uploadedAt: new Date().toISOString(),
+                    deviceInfo: {
+                        platform: navigator.platform,
+                        language: navigator.language,
+                        screenResolution: `${screen.width}x${screen.height}`
+                    }
+                });
+                
+                console.log("Poza încărcată cu succes! Document ID:", docRef.id);
+                return downloadURL;
+                
+            } catch (error) {
+                console.error("Eroare la încărcarea pozei:", error);
+                throw error;
+            }
+        }
+
+        // Fă funcția disponibilă global
+        window.uploadImageToFirebase = uploadImageToFirebase;
+
+        // Funcție pentru raportarea imaginilor cu numele utilizatorului
+        async function reportImageToFirebase(objectName, objectIndex, file, userName) {
+            try {
+                // Încarcă fișierul în Firebase Storage
+                const timestamp = Date.now();
+                const safeUserName = userName.replace(/[^a-zA-Z0-9]/g, '_');
+                const fileName = `reported-images/${safeUserName}/${objectName}_${timestamp}.jpg`;
+                const storageRef = ref(storage, fileName);
+                
+                const snapshot = await uploadBytes(storageRef, file);
+                const imageUrl = await getDownloadURL(snapshot.ref);
+                
+                // Salvează informațiile în Firestore
+                const docRef = await addDoc(collection(db, "reported-images"), {
+                    userName: userName,
+                    objectName: objectName,
+                    objectIndex: objectIndex,
+                    imageUrl: imageUrl,
+                    fileName: fileName,
+                    timestamp: serverTimestamp(),
+                    status: 'pending',
+                    userAgent: navigator.userAgent,
+                    reportedAt: new Date().toISOString(),
+                    deviceInfo: {
+                        platform: navigator.platform,
+                        language: navigator.language,
+                        screenResolution: `${screen.width}x${screen.height}`
+                    }
+                });
+                
+                return {
+                    docId: docRef.id,
+                    imageUrl: imageUrl
+                };
+            } catch (error) {
+                console.error("Eroare în reportImageToFirebase:", error);
+                throw error;
+            }
+        }
+
+        // Fă funcția disponibilă global
+        window.reportImageToFirebase = reportImageToFirebase;
+
+        // Funcție pentru salvarea progresului utilizatorului în Firebase
+        async function saveUserProgressToFirebase(userName, progressData) {
+            try {
+                const safeUserName = userName.replace(/[^a-zA-Z0-9]/g, '_');
+                
+                // Salvează în Firestore
+                const docRef = await addDoc(collection(db, "user-progress"), {
+                    userName: userName,
+                    safeUserName: safeUserName,
+                    completedObjects: progressData.completedObjects,
+                    totalObjects: progressData.totalObjects,
+                    completionPercentage: progressData.completionPercentage,
+                    lastUpdated: serverTimestamp(),
+                    timestamp: new Date().toISOString(),
+                    deviceInfo: {
+                        platform: navigator.platform,
+                        language: navigator.language,
+                        userAgent: navigator.userAgent,
+                        screenResolution: `${screen.width}x${screen.height}`
+                    }
+                });
+                
+                return docRef.id;
+            } catch (error) {
+                console.error("Eroare la salvarea progresului în Firebase:", error);
+                throw error;
+            }
+        }
+
+        // Funcție pentru încărcarea progresului utilizatorului din Firebase
+        async function loadUserProgressFromFirebase(userName) {
+            try {
+                // Caută cel mai recent progres pentru utilizator
+                const q = query(
+                    collection(db, "user-progress"),
+                    where("userName", "==", userName),
+                    orderBy("lastUpdated", "desc"),
+                    limit(1)
+                );
+                
+                const querySnapshot = await getDocs(q);
+
+                if (!querySnapshot.empty) {
+                    const doc = querySnapshot.docs[0];
+                    const data = doc.data();
+                    
+                    return {
+                        completedObjects: data.completedObjects || [],
+                        totalObjects: data.totalObjects || 0,
+                        completionPercentage: data.completionPercentage || 0,
+                        lastUpdated: data.lastUpdated,
+                        docId: doc.id
+                    };
+                } else {
+                    return null; // Nu există progres salvat
+                }
+                
+            } catch (error) {
+                console.error("Eroare la încărcarea progresului din Firebase:", error);
+                throw error;
+            }
+        }
+
+        // Funcție pentru încărcarea configurației obiectelor din Firebase
+        async function loadGameObjectsFromFirebase() {
+            try {
+                const configDoc = doc(db, "game-config", "objects");
+                const docSnap = await getDoc(configDoc);
+                
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    if (data.objects && Array.isArray(data.objects)) {
+                        return data.objects.filter(obj => obj.active !== false);
+                    }
+                }
+                
+                // Returnează configurația implicită dacă nu există în Firebase
+                return null;
+            } catch (error) {
+                console.error("Eroare la încărcarea configurației obiectelor:", error);
+                return null;
+            }
+        }
+
+        // Funcție pentru monitorizarea rapoartelor aprobate
+        async function listenForApprovedReports(userName) {
+            if (!userName) return null;
+            
+            console.log(`Pornesc monitorizarea rapoartelor pentru ${userName}`);
+            
+            const q = query(
+                collection(db, "reported-images"),
+                where("userName", "==", userName),
+                where("status", "==", "approved")
+            );
+            
+            const unsubscribe = onSnapshot(q, (snapshot) => {
+                snapshot.docChanges().forEach((change) => {
+                    if (change.type === "added" || change.type === "modified") {
+                        const reportData = change.doc.data();
+                        
+                        console.log("Raport aprobat detectat:", reportData);
+                        
+                        // Verifică dacă obiectul nu este deja marcat ca găsit
+                        if (reportData.objectIndex !== undefined && !completedObjects.has(reportData.objectIndex)) {
+                            // Marchează obiectul ca găsit
+                            completedObjects.add(reportData.objectIndex);
+                            
+                            // Actualizează interfața
+                            renderObjectList();
+                            updateProgress();
+                            
+                            // Afișează notificare
+                            showNotification(
+                                `🎉 Raportul tău pentru "${reportData.objectName}" a fost aprobat! Obiectul a fost marcat ca găsit.`,
+                                'success'
+                            );
+                            
+                            console.log(`Obiectul ${reportData.objectName} a fost marcat ca găsit pentru ${userName}`);
+                        }
+                    }
+                });
+            }, (error) => {
+                console.error("Eroare la monitorizarea rapoartelor:", error);
+            });
+            
+            return unsubscribe;
+        }
+
+        // Fă funcțiile disponibile global
+        window.saveUserProgressToFirebase = saveUserProgressToFirebase;
+        window.loadUserProgressFromFirebase = loadUserProgressFromFirebase;
+        window.loadGameObjectsFromFirebase = loadGameObjectsFromFirebase;
+        window.listenForApprovedReports = listenForApprovedReports;
+        
+        // Marchează Firebase ca inițializat
+        window.firebaseInitialized = true;
+    </script>
+
     <script>
-        // Lista obiectelor de căutat
-        const objects = [
+        // Lista obiectelor de căutat (va fi înlocuită cu cea din Firebase)
+        let objects = [
             { name: "Cană", emoji: "☕", keywords: ["cup", "mug", "coffee cup", "tea cup", "coffee mug", "drinking cup", "beverage"] },
             { name: "Telefon", emoji: "📱", keywords: ["phone", "mobile", "smartphone", "cell phone", "mobile phone", "iphone", "android"] },
             { name: "Carte", emoji: "📚", keywords: ["book", "books", "novel", "textbook", "magazine", "reading", "literature"] },
@@ -519,16 +800,32 @@
             { name: "Plantă", emoji: "🌱", keywords: ["plant", "flower", "potted plant", "houseplant", "foliage", "greenery"] },
             { name: "Cheie", emoji: "🔑", keywords: ["key", "keys", "house key", "car key", "keychain"] },
             { name: "Baterie", emoji: "🔋", keywords: ["battery", "batteries", "power cell", "rechargeable"] },
-            { name: "Monedă", emoji: "🪙", keywords: ["coin", "money", "currency", "change", "penny", "quarter"] }
         ];
 
         let currentUser = null;
         let completedObjects = new Set();
         let selectedObject = null;
         let reportedImages = [];
+        let reportsListener = null; // Pentru a stoca listener-ul
 
         // Inițializare
-        function init() {
+        async function init() {
+            // Așteaptă ca Firebase să se încarce
+            await waitForFirebase();
+            
+            // Încearcă să încarce configurația obiectelor din Firebase
+            try {
+                const firebaseObjects = await window.loadGameObjectsFromFirebase();
+                if (firebaseObjects && firebaseObjects.length > 0) {
+                    objects = firebaseObjects;
+                    console.log("Obiecte încărcate din Firebase:", objects.length);
+                } else {
+                    console.log("Folosesc configurația implicită pentru obiecte");
+                }
+            } catch (error) {
+                console.error("Eroare la încărcarea obiectelor din Firebase:", error);
+            }
+            
             checkExistingUser();
             
             // Event listeners pentru login
@@ -542,6 +839,20 @@
             document.getElementById('cameraInput').addEventListener('change', handleImageUpload);
         }
 
+        // Funcție pentru a aștepta ca Firebase să se încarce
+        function waitForFirebase() {
+            return new Promise((resolve) => {
+                const checkFirebase = () => {
+                    if (window.firebaseInitialized && window.uploadImageToFirebase && window.saveUserProgressToFirebase && window.loadUserProgressFromFirebase) {
+                        resolve();
+                    } else {
+                        setTimeout(checkFirebase, 100);
+                    }
+                };
+                checkFirebase();
+            });
+        }
+
         // Verifică dacă există un utilizator salvat
         async function checkExistingUser() {
             const savedUser = localStorage.getItem('vanatorea_user');
@@ -549,6 +860,7 @@
                 currentUser = savedUser;
                 await loadUserProgress();
                 showGameScreen();
+                await startListeningForApprovals(); // Pornește monitorizarea
             } else {
                 showLoginScreen();
             }
@@ -568,6 +880,62 @@
             document.getElementById('currentUserName').textContent = currentUser;
             renderObjectList();
             updateProgress();
+        }
+
+        // Pornește monitorizarea rapoartelor aprobate
+        async function startListeningForApprovals() {
+            if (!currentUser) return;
+            
+            // Oprește listener-ul anterior dacă există
+            if (reportsListener) {
+                reportsListener();
+                reportsListener = null;
+            }
+            
+            try {
+                reportsListener = await window.listenForApprovedReports(currentUser);
+                console.log("Monitorizarea rapoartelor a fost pornită pentru:", currentUser);
+            } catch (error) {
+                console.error("Eroare la pornirea monitorizării rapoartelor:", error);
+            }
+        }
+
+        // Oprește monitorizarea rapoartelor
+        function stopListeningForApprovals() {
+            if (reportsListener) {
+                reportsListener();
+                reportsListener = null;
+                console.log("Monitorizarea rapoartelor a fost oprită");
+            }
+        }
+
+        // Afișează notificare
+        function showNotification(message, type = 'success') {
+            // Elimină notificările existente
+            const existingNotifications = document.querySelectorAll('.notification');
+            existingNotifications.forEach(notification => notification.remove());
+            
+            // Creează noua notificare
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.innerHTML = message;
+            
+            document.body.appendChild(notification);
+            
+            // Afișează notificarea
+            setTimeout(() => {
+                notification.classList.add('show');
+            }, 100);
+            
+            // Ascunde notificarea după 5 secunde
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.parentNode.removeChild(notification);
+                    }
+                }, 300);
+            }, 5000);
         }
 
         // Gestionează login-ul
@@ -601,6 +969,9 @@
                 // Afișează ecranul de joc
                 showGameScreen();
                 
+                // Pornește monitorizarea rapoartelor aprobate
+                await startListeningForApprovals();
+                
             } catch (error) {
                 console.error('Eroare la login:', error);
                 alert('A apărut o eroare la încărcarea progresului. Încearcă din nou!');
@@ -619,6 +990,9 @@
                 } catch (error) {
                     console.error('Eroare la salvarea progresului:', error);
                 }
+                
+                // Oprește monitorizarea rapoartelor
+                stopListeningForApprovals();
                 
                 localStorage.removeItem('vanatorea_user');
                 currentUser = null;
@@ -1065,7 +1439,7 @@
                     return;
                 }
                 
-                showResult('loading', 'Convertesc și încarcă poza...');
+                showResult('loading', 'Convertesc și încarcă poza pentru review...');
                 
                 // Convertește base64 în fișier JPG
                 const timestamp = Date.now();
@@ -1079,14 +1453,10 @@
                 
                 console.log("Raport salvat cu ID:", result.docId);
                 
-                // Marchează ca completat după raportare
-                completedObjects.add(objectIndex);
-                
-                showResult('success', `📝 Mulțumim pentru raport! Poza a fost încărcată pentru verificare manuală.<br>🎉 ${obj.name} a fost marcat ca găsit!<br><small><a href="${result.imageUrl}" target="_blank">Vezi poza</a></small>`);
+                showResult('success', `📝 Mulțumim pentru raport! Poza a fost trimisă pentru verificare manuală.<br>🔔 Vei fi notificat automat când administratorul aprobă raportul și obiectul va fi marcat ca găsit!<br><small><a href="${result.imageUrl}" target="_blank">Vezi poza raportată</a></small>`);
                 
                 selectedObject = null;
                 renderObjectList();
-                updateProgress();
                 
             } catch (error) {
                 console.error("Eroare la salvarea raportului:", error);
@@ -1125,188 +1495,13 @@
                 
                 document.getElementById('result').style.display = 'none';
                 document.getElementById('celebration').style.display = 'none';
+                
+                showNotification('🔄 Progresul a fost resetat cu succes!', 'success');
             }
         }
 
         // Inițializează aplicația
         init();
-    </script>
-
-    <!-- Firebase SDK -->
-    <script type="module">
-        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-        import { getStorage, ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js';
-        import { getFirestore, collection, addDoc, serverTimestamp, query, where, orderBy, limit, getDocs } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
-
-        // Configurația Firebase
-        const firebaseConfig = {
-            apiKey: "AIzaSyAA1ytLJrwh7JHSOwGQrf2t_5imgtiWLk4",
-            authDomain: "tabara-2025-95ff5.firebaseapp.com",
-            projectId: "tabara-2025-95ff5",
-            storageBucket: "tabara-2025-95ff5.firebasestorage.app",
-            messagingSenderId: "552618851743",
-            appId: "1:552618851743:web:tabara2025app"
-        };
-
-        // Inițializează Firebase
-        const app = initializeApp(firebaseConfig);
-        const storage = getStorage(app);
-        const db = getFirestore(app);
-
-        // Funcție pentru încărcarea pozei în Firebase Storage cu numele utilizatorului
-        async function uploadImageToFirebase(file, objectName, userName) {
-            try {
-                // Creează un nume unic pentru fișier
-                const timestamp = Date.now();
-                const safeUserName = userName.replace(/[^a-zA-Z0-9]/g, '_');
-                const fileName = `vanatorade-obiecte/${safeUserName}/${objectName}_${timestamp}.jpg`;
-                
-                // Creează referința în Storage
-                const storageRef = ref(storage, fileName);
-                
-                // Încarcă fișierul
-                const snapshot = await uploadBytes(storageRef, file);
-                
-                // Obține URL-ul de download
-                const downloadURL = await getDownloadURL(snapshot.ref);
-                
-                // Salvează informațiile în Firestore
-                const docRef = await addDoc(collection(db, "discovered-objects"), {
-                    userName: userName,
-                    objectName: objectName,
-                    imageUrl: downloadURL,
-                    fileName: fileName,
-                    timestamp: serverTimestamp(),
-                    userAgent: navigator.userAgent,
-                    uploadedAt: new Date().toISOString(),
-                    deviceInfo: {
-                        platform: navigator.platform,
-                        language: navigator.language,
-                        screenResolution: `${screen.width}x${screen.height}`
-                    }
-                });
-                
-                console.log("Poza încărcată cu succes! Document ID:", docRef.id);
-                return downloadURL;
-                
-            } catch (error) {
-                console.error("Eroare la încărcarea pozei:", error);
-                throw error;
-            }
-        }
-
-        // Fă funcția disponibilă global
-        window.uploadImageToFirebase = uploadImageToFirebase;
-
-        // Funcție pentru raportarea imaginilor cu numele utilizatorului
-        async function reportImageToFirebase(objectName, objectIndex, file, userName) {
-            try {
-                // Încarcă fișierul în Firebase Storage
-                const timestamp = Date.now();
-                const safeUserName = userName.replace(/[^a-zA-Z0-9]/g, '_');
-                const fileName = `reported-images/${safeUserName}/${objectName}_${timestamp}.jpg`;
-                const storageRef = ref(storage, fileName);
-                
-                const snapshot = await uploadBytes(storageRef, file);
-                const imageUrl = await getDownloadURL(snapshot.ref);
-                
-                // Salvează informațiile în Firestore
-                const docRef = await addDoc(collection(db, "reported-images"), {
-                    userName: userName,
-                    objectName: objectName,
-                    objectIndex: objectIndex,
-                    imageUrl: imageUrl,
-                    fileName: fileName,
-                    timestamp: serverTimestamp(),
-                    status: 'pending',
-                    userAgent: navigator.userAgent,
-                    reportedAt: new Date().toISOString(),
-                    deviceInfo: {
-                        platform: navigator.platform,
-                        language: navigator.language,
-                        screenResolution: `${screen.width}x${screen.height}`
-                    }
-                });
-                
-                return {
-                    docId: docRef.id,
-                    imageUrl: imageUrl
-                };
-            } catch (error) {
-                console.error("Eroare în reportImageToFirebase:", error);
-                throw error;
-            }
-        }
-
-        // Fă funcția disponibilă global
-        window.reportImageToFirebase = reportImageToFirebase;
-
-        // Funcție pentru salvarea progresului utilizatorului în Firebase
-        async function saveUserProgressToFirebase(userName, progressData) {
-            try {
-                const safeUserName = userName.replace(/[^a-zA-Z0-9]/g, '_');
-                
-                // Salvează în Firestore
-                const docRef = await addDoc(collection(db, "user-progress"), {
-                    userName: userName,
-                    safeUserName: safeUserName,
-                    completedObjects: progressData.completedObjects,
-                    totalObjects: progressData.totalObjects,
-                    completionPercentage: progressData.completionPercentage,
-                    lastUpdated: serverTimestamp(),
-                    timestamp: new Date().toISOString(),
-                    deviceInfo: {
-                        platform: navigator.platform,
-                        language: navigator.language,
-                        userAgent: navigator.userAgent,
-                        screenResolution: `${screen.width}x${screen.height}`
-                    }
-                });
-                
-                return docRef.id;
-            } catch (error) {
-                console.error("Eroare la salvarea progresului în Firebase:", error);
-                throw error;
-            }
-        }
-
-        // Funcție pentru încărcarea progresului utilizatorului din Firebase
-        async function loadUserProgressFromFirebase(userName) {
-            try {
-                // Caută cel mai recent progres pentru utilizator
-                const q = query(
-                    collection(db, "user-progress"),
-                    where("userName", "==", userName),
-                    orderBy("lastUpdated", "desc"),
-                    limit(1)
-                );
-                
-                const querySnapshot = await getDocs(q);
-                
-                if (!querySnapshot.empty) {
-                    const doc = querySnapshot.docs[0];
-                    const data = doc.data();
-                    
-                    return {
-                        completedObjects: data.completedObjects || [],
-                        totalObjects: data.totalObjects || 0,
-                        completionPercentage: data.completionPercentage || 0,
-                        lastUpdated: data.lastUpdated,
-                        docId: doc.id
-                    };
-                } else {
-                    return null; // Nu există progres salvat
-                }
-                
-            } catch (error) {
-                console.error("Eroare la încărcarea progresului din Firebase:", error);
-                throw error;
-            }
-        }
-
-        // Fă funcțiile disponibile global
-        window.saveUserProgressToFirebase = saveUserProgressToFirebase;
-        window.loadUserProgressFromFirebase = loadUserProgressFromFirebase;
     </script>
 </body>
 </html>
