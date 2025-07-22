@@ -1147,6 +1147,32 @@
             result.style.display = 'block';
             result.className = 'result';
             result.innerHTML = `Obiect selectat: <strong>${objects[index].name} ${objects[index].emoji}</strong><br>Acum fă o poză cu acest obiect!`;
+            
+            // Derulează automat la secțiunea de încărcare
+            scrollToUploadSection();
+        }
+
+        // Funcție pentru derularea la secțiunea de încărcare
+        function scrollToUploadSection() {
+            const uploadSection = document.querySelector('.upload-section');
+            if (uploadSection) {
+                // Calculează poziția cu un offset pentru a lăsa spațiu în partea de sus
+                const offsetTop = uploadSection.offsetTop - 20;
+                
+                // Derulează smooth la secțiunea de încărcare
+                window.scrollTo({
+                    top: offsetTop,
+                    behavior: 'smooth'
+                });
+                
+                // Adaugă un efect vizual de highlight pentru câteva secunde
+                uploadSection.style.transform = 'scale(1.02)';
+                uploadSection.style.transition = 'transform 0.3s ease';
+                
+                setTimeout(() => {
+                    uploadSection.style.transform = 'scale(1)';
+                }, 300);
+            }
         }
 
         // Actualizează bara de progres
